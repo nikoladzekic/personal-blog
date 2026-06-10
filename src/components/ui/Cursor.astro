@@ -1,0 +1,206 @@
+<div id="cursor-root" aria-hidden="true">
+  <!-- Default arrow cursor -->
+  <svg id="cursor-default" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <g class="pop">
+      <g class="dr"><g class="gr">
+        <polygon points="1,0 1,21 15,15" fill="none" stroke="#ff0040" stroke-width="1.5" stroke-linejoin="miter"/>
+      </g></g>
+      <g class="db"><g class="gb">
+        <polygon points="1,0 1,21 15,15" fill="none" stroke="#00ffff" stroke-width="1.5" stroke-linejoin="miter"/>
+      </g></g>
+      <g class="gg">
+        <polygon points="1,0 1,21 15,15" fill="none" stroke="#39ff14" stroke-width="1.5" stroke-linejoin="miter"/>
+      </g>
+      <rect x="0" y="0" width="2" height="2" fill="#fff" opacity="0.85"/>
+    </g>
+  </svg>
+
+  <!-- Pointer reticle cursor -->
+  <svg id="cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <g class="ticks" stroke="#ffb800" stroke-width="1.5" stroke-linecap="square">
+      <line x1="16" y1="2"  x2="16" y2="6"/>
+      <line x1="16" y1="26" x2="16" y2="30"/>
+      <line x1="2"  y1="16" x2="6"  y2="16"/>
+      <line x1="26" y1="16" x2="30" y2="16"/>
+    </g>
+    <g class="corners" stroke="#ffb800" stroke-width="1.5" fill="none" stroke-linecap="square">
+      <polyline points="9,6  6,6  6,9"/>
+      <polyline points="23,6 26,6 26,9"/>
+      <polyline points="26,23 26,26 23,26"/>
+      <polyline points="6,23  6,26  9,26"/>
+    </g>
+    <g stroke="#ffb800" stroke-width="1" stroke-linecap="square" opacity="0.75">
+      <line x1="13"  y1="16" x2="14.5" y2="16"/>
+      <line x1="17.5" y1="16" x2="19"  y2="16"/>
+      <line x1="16" y1="13"  x2="16" y2="14.5"/>
+      <line x1="16" y1="17.5" x2="16" y2="19"/>
+    </g>
+    <circle class="dot" cx="16" cy="16" r="1.5" fill="#ffb800"/>
+  </svg>
+
+  <!-- Click / impact cursor -->
+  <svg id="cursor-click" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <g stroke="#ffb800" stroke-width="2" fill="none" stroke-linecap="square">
+      <polyline points="12,9  9,9  9,12"/>
+      <polyline points="20,9 23,9 23,12"/>
+      <polyline points="23,20 23,23 20,23"/>
+      <polyline points="9,20  9,23 12,23"/>
+    </g>
+    <g stroke="#ffb800" stroke-width="1.5" stroke-linecap="square">
+      <line x1="13"  y1="16" x2="14.5" y2="16"/>
+      <line x1="17.5" y1="16" x2="19"  y2="16"/>
+      <line x1="16" y1="13"  x2="16" y2="14.5"/>
+      <line x1="16" y1="17.5" x2="16" y2="19"/>
+    </g>
+    <circle cx="16" cy="16" r="3.5" fill="#ffb800" opacity="0.95"/>
+  </svg>
+</div>
+
+<style is:global>
+  /* Hide native cursor everywhere */
+  * { cursor: none !important; }
+
+  #cursor-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    /* translate set by JS; offset hotspot so tip/center aligns to pointer */
+  }
+
+  #cursor-root svg {
+    position: absolute;
+    display: none;
+  }
+
+  /* Default arrow: hotspot at tip (1,0) — shift left 1px, 0px up */
+  #cursor-default { transform: translate(-1px, 0px); }
+
+  /* Pointer/click: hotspot at center (16,16) — shift left 16px, up 16px */
+  #cursor-pointer { transform: translate(-16px, -16px); }
+  #cursor-click   { transform: translate(-16px, -16px); }
+
+  /* State visibility */
+  #cursor-root.state-default  #cursor-default { display: block; }
+  #cursor-root.state-pointer  #cursor-pointer { display: block; }
+  #cursor-root.state-clicking #cursor-click   { display: block; }
+
+  /* ── Default arrow animations ── */
+  @keyframes drift-r { 0%,100%{transform:translateX(1.5px)} 50%{transform:translateX(2.8px)} }
+  @keyframes drift-b { 0%,100%{transform:translateX(-1.5px)} 50%{transform:translateX(-2.8px)} }
+
+  @keyframes glitch-r {
+    0%,79%,86%,100% { transform:translateX(0); }
+    80% { transform:translateX(-6px); }
+    81% { transform:translateX(9px);  }
+    82% { transform:translateX(2px);  }
+    83% { transform:translateX(-4px); }
+    84% { transform:translateX(7px);  }
+    85% { transform:translateX(0);    }
+  }
+  @keyframes glitch-g {
+    0%,79%,86%,100% { transform:translateX(0); }
+    80% { transform:translateX(3px);  }
+    81% { transform:translateX(-5px); }
+    82% { transform:translateX(1px);  }
+    83% { transform:translateX(-2px); }
+    84% { transform:translateX(4px);  }
+    85% { transform:translateX(0);    }
+  }
+  @keyframes glitch-b {
+    0%,79%,86%,100% { transform:translateX(0); }
+    80% { transform:translateX(7px);  }
+    81% { transform:translateX(-10px);}
+    82% { transform:translateX(-2px); }
+    83% { transform:translateX(5px);  }
+    84% { transform:translateX(-8px); }
+    85% { transform:translateX(0);    }
+  }
+  @keyframes pop-glitch {
+    0%,87%,95%,100% { transform: none; }
+    88% { transform: translate( 6px, -5px) scaleX(1.2);  }
+    89% { transform: translate(-9px, -9px) scaleX(0.8);  }
+    90% { transform: translate( 4px, -4px) scaleX(1.15); }
+    91% { transform: translate(-3px, -7px) scaleX(0.9);  }
+    92% { transform: translate( 8px, -3px) scaleX(1.1);  }
+    93% { transform: translate(-5px, -6px) scaleX(0.85); }
+    94% { transform: none; }
+  }
+
+  #cursor-default .dr  { animation: drift-r    3s ease-in-out infinite; }
+  #cursor-default .db  { animation: drift-b    3s ease-in-out infinite; }
+  #cursor-default .gr  { animation: glitch-r   5s steps(1) infinite; }
+  #cursor-default .gg  { animation: glitch-g   5s steps(1) infinite; }
+  #cursor-default .gb  { animation: glitch-b   5s steps(1) infinite; }
+  #cursor-default .pop { animation: pop-glitch 8s steps(1) infinite; transform-origin: 1px 0px; }
+
+  /* ── Pointer reticle animations ── */
+  @keyframes spin-ccw      { to { transform: rotate(-360deg); } }
+  @keyframes brackets-pulse {
+    0%, 100% { transform: scale(1);    opacity: 1;    }
+    50%       { transform: scale(0.88); opacity: 0.55; }
+  }
+  @keyframes dot-flare {
+    0%, 100% { opacity: 1;   }
+    50%       { opacity: 0.3; }
+  }
+
+  #cursor-pointer .ticks   { transform-origin: 16px 16px; animation: spin-ccw       1.6s linear      infinite; }
+  #cursor-pointer .corners { transform-origin: 16px 16px; animation: brackets-pulse 0.85s ease-in-out infinite; }
+  #cursor-pointer .dot                                   { animation: dot-flare      0.85s ease-in-out infinite; }
+</style>
+
+<script>
+  const root = document.getElementById('cursor-root')!;
+
+  let mx = -200, my = -200;
+
+  // Start off-screen so it never flashes at (0, 0)
+  root.style.transform = `translate(${mx}px,${my}px)`;
+
+  function move(x: number, y: number) {
+    mx = x;
+    my = y;
+    root.style.transform = `translate(${mx}px,${my}px)`;
+  }
+
+  function getState(): 'default' | 'pointer' | 'clicking' {
+    if (document.documentElement.classList.contains('cursor-clicking')) return 'clicking';
+    const el = document.elementFromPoint(mx, my);
+    if (el && el.closest('a, button, [role="button"], [role="tab"], input, label, select, [tabindex]')) return 'pointer';
+    return 'default';
+  }
+
+  function updateState() {
+    root.className = `state-${getState()}`;
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    move(e.clientX, e.clientY);
+    updateState();
+  });
+
+  // Hide custom cursor and restore native one while pointer is outside the page
+  document.addEventListener('mouseleave', () => {
+    root.style.opacity = '0';
+    document.documentElement.style.cursor = '';
+  });
+  document.addEventListener('mouseenter', (e) => {
+    move((e as MouseEvent).clientX, (e as MouseEvent).clientY);
+    root.style.opacity = '1';
+    document.documentElement.style.cursor = 'none';
+    updateState();
+  });
+
+  document.addEventListener('mousedown', () => {
+    document.documentElement.classList.add('cursor-clicking');
+    updateState();
+  });
+  document.addEventListener('mouseup', () => {
+    document.documentElement.classList.remove('cursor-clicking');
+    updateState();
+  });
+
+  updateState();
+</script>

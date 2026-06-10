@@ -1,0 +1,93 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  sector: string;
+  date: Date;
+  tags?: string[];
+}
+
+const { title, description, sector, date, tags = [] } = Astro.props;
+
+const formatted = date.toLocaleDateString('en-GB', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+}).toUpperCase();
+---
+
+<Base title={title} description={description} sector={sector}>
+  <div class="container post-wrapper">
+    <header class="post-header">
+      <p class="sector-label">{sector}</p>
+      <h1 class="post-title cursor-blink">{title}</h1>
+      <div class="post-meta">
+        <span class="post-date">{formatted}</span>
+        {tags.length > 0 && (
+          <div class="post-tags">
+            {tags.map(tag => <span class="tag">{tag}</span>)}
+          </div>
+        )}
+      </div>
+    </header>
+
+    <article class="dialog-box prose">
+      <slot />
+    </article>
+
+    <footer class="post-footer">
+      <a href={`/${sector.toLowerCase()}`} class="btn-retro-outline btn-retro">
+        ← BACK
+      </a>
+    </footer>
+  </div>
+</Base>
+
+<style>
+  .post-wrapper {
+    padding: 3rem 1.5rem;
+  }
+
+  .post-header {
+    margin-bottom: 2rem;
+  }
+
+  .post-title {
+    font-size: 0.9rem;
+    margin: 0.75rem 0 1rem;
+    line-height: 1.6;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .post-date {
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .prose {
+    font-size: 1.25rem;
+    line-height: 1.8;
+  }
+
+  .post-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+</style>

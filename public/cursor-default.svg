@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <style>
+    @keyframes drift-r { 0%,100%{transform:translateX(1.5px)} 50%{transform:translateX(2.8px)} }
+    @keyframes drift-b { 0%,100%{transform:translateX(-1.5px)} 50%{transform:translateX(-2.8px)} }
+
+    @keyframes glitch-r {
+      0%,79%,86%,100% { transform:translateX(0); }
+      80% { transform:translateX(-6px); }
+      81% { transform:translateX(9px);  }
+      82% { transform:translateX(2px);  }
+      83% { transform:translateX(-4px); }
+      84% { transform:translateX(7px);  }
+      85% { transform:translateX(0);    }
+    }
+    @keyframes glitch-g {
+      0%,79%,86%,100% { transform:translateX(0); }
+      80% { transform:translateX(3px);  }
+      81% { transform:translateX(-5px); }
+      82% { transform:translateX(1px);  }
+      83% { transform:translateX(-2px); }
+      84% { transform:translateX(4px);  }
+      85% { transform:translateX(0);    }
+    }
+    @keyframes glitch-b {
+      0%,79%,86%,100% { transform:translateX(0); }
+      80% { transform:translateX(7px);  }
+      81% { transform:translateX(-10px);}
+      82% { transform:translateX(-2px); }
+      83% { transform:translateX(5px);  }
+      84% { transform:translateX(-8px); }
+      85% { transform:translateX(0);    }
+    }
+
+    /* Whole-cursor pop-out — cursor "leaps" from its plane for a few frames */
+    @keyframes pop-glitch {
+      0%,87%,95%,100% { transform: none; }
+      88% { transform: translate( 6px, -5px) scaleX(1.2);  }
+      89% { transform: translate(-9px, -9px) scaleX(0.8);  }
+      90% { transform: translate( 4px, -4px) scaleX(1.15); }
+      91% { transform: translate(-3px, -7px) scaleX(0.9);  }
+      92% { transform: translate( 8px, -3px) scaleX(1.1);  }
+      93% { transform: translate(-5px, -6px) scaleX(0.85); }
+      94% { transform: none; }
+    }
+
+    .dr  { animation: drift-r    3s ease-in-out infinite; }
+    .db  { animation: drift-b    3s ease-in-out infinite; }
+    .gr  { animation: glitch-r   5s steps(1) infinite; }
+    .gg  { animation: glitch-g   5s steps(1) infinite; }
+    .gb  { animation: glitch-b   5s steps(1) infinite; }
+    .pop { animation: pop-glitch 8s steps(1) infinite; transform-origin: 1px 0px; }
+  </style>
+
+  <g class="pop">
+    <!-- Red channel -->
+    <g class="dr"><g class="gr">
+      <polygon points="1,0 1,21 15,15"
+               fill="none" stroke="#ff0040" stroke-width="1.5" stroke-linejoin="miter"/>
+    </g></g>
+
+    <!-- Blue channel -->
+    <g class="db"><g class="gb">
+      <polygon points="1,0 1,21 15,15"
+               fill="none" stroke="#00ffff" stroke-width="1.5" stroke-linejoin="miter"/>
+    </g></g>
+
+    <!-- Green channel -->
+    <g class="gg">
+      <polygon points="1,0 1,21 15,15"
+               fill="none" stroke="#39ff14" stroke-width="1.5" stroke-linejoin="miter"/>
+    </g>
+
+    <rect x="0" y="0" width="2" height="2" fill="#fff" opacity="0.85"/>
+  </g>
+</svg>

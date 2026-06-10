@@ -1,0 +1,184 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const allEntries = await getCollection('research', ({ data }) => !data.draft);
+const entries = allEntries.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+function severityBadge(severity: string) {
+  return `badge badge-${severity}`;
+}
+
+function platformLabel(platform: string) {
+  const labels: Record<string, string> = {
+    hackerone: 'HackerOne',
+    bugcrowd: 'Bugcrowd',
+    intigriti: 'Intigriti',
+    other: 'Bug Bounty',
+  };
+  return labels[platform] ?? platform;
+}
+---
+
+<Base title="Research" sector="RESEARCH">
+  <div class="container page-wrapper">
+    <header class="page-header">
+      <p class="sector-label">RESEARCH</p>
+      <h1 class="page-title cursor-blink">SECURITY RESEARCH</h1>
+      <p class="page-desc">
+        CVE disclosures, bug bounty findings, and novel technique writeups.
+      </p>
+    </header>
+
+    <div class="filter-tabs" role="tablist" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all" role="tab">ALL</button>
+      <button class="filter-tab" data-filter="cve" role="tab">CVEs</button>
+      <button class="filter-tab" data-filter="bounty" role="tab">BUG BOUNTY</button>
+      <button class="filter-tab" data-filter="research" role="tab">TECHNIQUES</button>
+    </div>
+
+    {entries.length === 0 ? (
+      <p class="empty">// NO ENTRIES FOUND</p>
+    ) : (
+      <ul class="rpg-menu entry-list" id="entry-list">
+        {entries.map(entry => {
+          const date = entry.data.date.toLocaleDateString('en-GB', {
+            year: 'numeric', month: 'short', day: '2-digit',
+          }).toUpperCase();
+
+          return (
+            <li data-type={entry.data.type}>
+              <a href={`/research/${entry.id}`}>
+                <span class="entry-head">
+                  <span class={`badge badge-${entry.data.type}`}>
+                    {entry.data.type === 'cve' ? 'CVE'
+                      : entry.data.type === 'bounty' ? 'BOUNTY'
+                      : 'RESEARCH'}
+                  </span>
+                  {(entry.data.type === 'cve' || entry.data.type === 'bounty') && (
+                    <span class={severityBadge(entry.data.severity)}>
+                      {entry.data.severity.toUpperCase()}
+                    </span>
+                  )}
+                  {entry.data.type === 'cve' && (
+                    <span class="cve-id">{entry.data.cve}</span>
+                  )}
+                  {entry.data.type === 'bounty' && (
+                    <span class="platform-label">{platformLabel(entry.data.platform)}</span>
+                  )}
+                </span>
+                <span class="entry-title">{entry.data.title}</span>
+                <span class="entry-meta">
+                  <span class="entry-date">{date}</span>
+                  {entry.data.tags.slice(0, 3).map(tag => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </div>
+</Base>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.filter-tab');
+  const items = document.querySelectorAll<HTMLLIElement>('#entry-list li');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const filter = tab.dataset.filter!;
+      items.forEach(item => {
+        item.style.display =
+          filter === 'all' || item.dataset.type === filter ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+<style>
+  .page-wrapper {
+    padding: 3rem 1.5rem;
+  }
+
+  .page-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-size: 0.9rem;
+    margin: 0.5rem 0 1rem;
+  }
+
+  .page-desc {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  .entry-list a {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .entry-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cve-id {
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    color: var(--red);
+    letter-spacing: 0.05em;
+  }
+
+  .platform-label {
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    color: var(--purple);
+    letter-spacing: 0.05em;
+  }
+
+  .entry-title {
+    font-family: var(--font-pixel);
+    font-size: 0.65rem;
+    color: var(--text);
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+
+  .rpg-menu a:hover .entry-title {
+    color: var(--green);
+  }
+
+  .entry-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .entry-date {
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .empty {
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    padding: 2rem 0;
+  }
+</style>

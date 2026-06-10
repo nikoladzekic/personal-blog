@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="404" description="Sector not found." sector="ERROR">
+  <div class="not-found">
+    <div class="crt-frame">
+      <p class="error-code">404</p>
+      <h1>SECTOR NOT FOUND</h1>
+      <p class="error-msg">The coordinates you entered do not exist on this map.</p>
+      <div class="divider">──────────────────────</div>
+      <nav class="error-nav">
+        <a href="/" class="error-link">▶ RETURN TO MENU</a>
+        <a href="/blog" class="error-link">▶ BLOG</a>
+        <a href="/research" class="error-link">▶ RESEARCH</a>
+        <a href="/tour" class="error-link error-link--tour">▶ INTERACTIVE TOUR</a>
+      </nav>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .not-found {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .crt-frame {
+    border: 3px solid var(--green-dim);
+    box-shadow: var(--glow-green), inset 0 0 40px rgba(57, 255, 20, 0.03);
+    max-width: 520px;
+    width: 100%;
+    padding: 3rem 2.5rem;
+    text-align: center;
+  }
+
+  .error-code {
+    font-family: var(--font-pixel);
+    font-size: 2rem;
+    color: var(--amber);
+    margin: 0 0 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: var(--green);
+    margin: 0 0 1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .error-msg {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin: 0 0 1.5rem;
+  }
+
+  .divider {
+    font-family: var(--font-mono);
+    color: var(--border);
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .error-link {
+    font-family: var(--font-pixel);
+    font-size: 0.45rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color 0.1s;
+  }
+
+  .error-link:hover {
+    color: var(--green);
+  }
+
+  .error-link--tour {
+    color: var(--purple);
+  }
+
+  .error-link--tour:hover {
+    color: var(--purple);
+    text-shadow: 0 0 8px rgba(157, 78, 221, 0.35);
+  }
+</style>

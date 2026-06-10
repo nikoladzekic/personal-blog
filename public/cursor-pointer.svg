@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!--
+    Amber targeting reticle — "target acquired" state for links/buttons.
+    Hotspot = center = (16, 16)
+  -->
+  <style>
+    @keyframes spin-ccw {
+      to { transform: rotate(-360deg); }
+    }
+    @keyframes brackets-pulse {
+      0%, 100% { transform: scale(1);   opacity: 1;   }
+      50%       { transform: scale(0.88); opacity: 0.55; }
+    }
+    @keyframes dot-flare {
+      0%, 100% { opacity: 1;   }
+      50%       { opacity: 0.3; }
+    }
+    .ticks   { transform-origin: 16px 16px; animation: spin-ccw       1.6s linear      infinite; }
+    .corners { transform-origin: 16px 16px; animation: brackets-pulse 0.85s ease-in-out infinite; }
+    .dot                                  { animation: dot-flare      0.85s ease-in-out infinite; }
+  </style>
+
+  <!-- Outer ticks — spin counter-clockwise (faster = "locked on" urgency) -->
+  <g class="ticks" stroke="#ffb800" stroke-width="1.5" stroke-linecap="square">
+    <line x1="16" y1="2"  x2="16" y2="6"/>
+    <line x1="16" y1="26" x2="16" y2="30"/>
+    <line x1="2"  y1="16" x2="6"  y2="16"/>
+    <line x1="26" y1="16" x2="30" y2="16"/>
+  </g>
+
+  <!-- Corner brackets — pulse in/out -->
+  <g class="corners" stroke="#ffb800" stroke-width="1.5" fill="none" stroke-linecap="square">
+    <polyline points="9,6  6,6  6,9"/>
+    <polyline points="23,6 26,6 26,9"/>
+    <polyline points="26,23 26,26 23,26"/>
+    <polyline points="6,23  6,26  9,26"/>
+  </g>
+
+  <!-- Static crosshair lines -->
+  <g stroke="#ffb800" stroke-width="1" stroke-linecap="square" opacity="0.75">
+    <line x1="13"  y1="16" x2="14.5" y2="16"/>
+    <line x1="17.5" y1="16" x2="19"  y2="16"/>
+    <line x1="16" y1="13"  x2="16" y2="14.5"/>
+    <line x1="16" y1="17.5" x2="16" y2="19"/>
+  </g>
+
+  <!-- Center dot — flares with the brackets -->
+  <circle class="dot" cx="16" cy="16" r="1.5" fill="#ffb800"/>
+</svg>

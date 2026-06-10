@@ -1,0 +1,170 @@
+---
+interface Props {
+  sector?: string;
+}
+const { sector } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/blog', label: 'BLOG' },
+  { href: '/research', label: 'RESEARCH' },
+];
+---
+
+<header class="retro-nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">ndzekic.dev</span>
+      <span class="logo-bracket">]</span>
+    </a>
+
+    {sector && (
+      <span class="nav-sector">
+        <span class="sector-sep">/</span>
+        <span class="sector-name">{sector}</span>
+      </span>
+    )}
+
+    <nav class="nav-links">
+      {navLinks.map(link => (
+        <a
+          href={link.href}
+          class:list={['nav-link', { active: currentPath.startsWith(link.href) }]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
+      <span class="theme-icon" id="theme-icon">◑</span>
+    </button>
+  </div>
+</header>
+
+<script>
+  function initThemeToggle() {
+    const btn = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-icon');
+    if (!btn || !icon) return;
+
+    function updateIcon() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      icon.textContent = isDark ? '◑' : '◐';
+    }
+
+    updateIcon();
+
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateIcon();
+    });
+  }
+
+  initThemeToggle();
+  document.addEventListener('astro:after-swap', initThemeToggle);
+</script>
+
+<style>
+  .retro-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 0;
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .nav-logo {
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    color: var(--green);
+    text-decoration: none;
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+
+  .nav-logo:hover {
+    text-shadow: 0 0 3px rgba(57, 255, 20, 0.4);
+  }
+
+  .logo-bracket { color: var(--green-dim); }
+
+  .nav-sector {
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .sector-sep {
+    color: var(--border);
+    margin-right: 0.5rem;
+  }
+
+  .sector-name {
+    color: var(--amber);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    margin-left: auto;
+  }
+
+  .nav-link {
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    transition: color 0.1s;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--green);
+  }
+
+  .nav-link.active::before {
+    content: '▶ ';
+    color: var(--green-dim);
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .theme-toggle:hover {
+    color: var(--green);
+    border-color: var(--green-dim);
+  }
+
+  .theme-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  @media (max-width: 600px) {
+    .nav-sector { display: none; }
+  }
+</style>

@@ -1,0 +1,33 @@
+---
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Tour | ndzekic.dev</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body class="tour-body">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  .tour-body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+  }
+
+  /* Remove scanline on tour — handled in-world */
+  .tour-body::after {
+    display: none;
+  }
+</style>

@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+
+/* ── Palette ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:           #0a0a0f;
+  --bg-surface:   #0f0f1a;
+  --bg-elevated:  #151525;
+  --border:       #1e1e3a;
+  --green:        #39ff14;
+  --green-dim:    #1a7a08;
+  --amber:        #ffb800;
+  --blue:         #00b4ff;
+  --purple:       #9d4edd;
+  --red:          #ff3e3e;
+  --text:         #c8ffc8;
+  --text-dim:     #6b8f6b;
+  --text-muted:   #3d5c3d;
+
+  --font-pixel:   'Press Start 2P', monospace;
+  --font-mono:    'Share Tech Mono', monospace;
+
+  --pixel-border: 2px solid var(--green-dim);
+  --glow-green:   0 0 6px var(--green), 0 0 12px var(--green-dim);
+  --glow-blue:    0 0 6px var(--blue);
+  --glow-amber:   0 0 6px var(--amber);
+}
+
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f0f4f0;
+  --bg-surface:   #e6ede6;
+  --bg-elevated:  #dae5da;
+  --border:       #b0c8b0;
+  --green:        #0d6600;
+  --green-dim:    #1a8a08;
+  --amber:        #8a5000;
+  --blue:         #004fa0;
+  --purple:       #6020b0;
+  --red:          #c80000;
+  --text:         #0a1a0a;
+  --text-dim:     #2a4a2a;
+  --text-muted:   #4a6a4a;
+
+  --glow-green:   0 0 4px rgba(13, 102, 0, 0.35);
+  --glow-blue:    0 0 4px rgba(0, 79, 160, 0.35);
+  --glow-amber:   0 0 4px rgba(138, 80, 0, 0.35);
+}
+
+[data-theme="light"] body::after {
+  opacity: 0.25;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Scanline overlay ────────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--font-pixel);
+  color: var(--green);
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+}
+
+h1 { font-size: 1rem; }
+h2 { font-size: 0.85rem; }
+h3 { font-size: 0.75rem; }
+h4 { font-size: 0.65rem; }
+
+p {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 1em;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--green);
+  text-shadow: 0 0 3px rgba(57, 255, 20, 0.35);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  background: var(--bg-elevated);
+  color: var(--amber);
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--border);
+}
+
+pre {
+  background: var(--bg-elevated) !important;
+  border: var(--pixel-border);
+  padding: 1.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.95rem;
+}
+
+blockquote {
+  border-left: 3px solid var(--green-dim);
+  padding-left: 1rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin: 1.5rem 0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+ul, ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1em;
+}
+
+li {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 0.25em;
+}
+
+/* ── Blinking cursor ─────────────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-start infinite;
+  color: var(--green);
+  margin-left: 2px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--green-dim); border: 1px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
+/* ── Color scheme meta ───────────────────────────────────────────────────── */
+:root                   { color-scheme: dark; }
+[data-theme="light"]    { color-scheme: light; }

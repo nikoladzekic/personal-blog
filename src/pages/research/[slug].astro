@@ -1,0 +1,144 @@
+---
+import { getCollection, render } from 'astro:content';
+import Post from '../../layouts/Post.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('research', ({ data }) => !data.draft);
+  return entries.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const data = entry.data;
+const severity = 'severity' in data ? data.severity : null;
+const cve       = data.type === 'cve'    ? data.cve       : null;
+const platform  = data.type === 'bounty' ? data.platform  : null;
+const program   = data.type === 'bounty' ? data.program   : null;
+const cvss      = ('cvss' in data && data.cvss) ? data.cvss : null;
+const bounty    = (data.type === 'bounty' && data.bounty) ? data.bounty : null;
+const reportUrl = (data.type === 'bounty' && data.reportUrl) ? data.reportUrl : null;
+const patched   = (data.type === 'cve' && data.patched)  ? data.patched  : null;
+const refs      = (data.type === 'research' && data.references) ? data.references : null;
+
+const platformLabels: Record<string, string> = {
+  hackerone: 'HackerOne', bugcrowd: 'Bugcrowd',
+  intigriti: 'Intigriti', other: 'Bug Bounty',
+};
+---
+
+<Post
+  title={data.title}
+  description={data.description}
+  sector="RESEARCH"
+  date={data.date}
+  tags={data.tags}
+>
+  <!-- Type-specific metadata panel -->
+  <div class="meta-panel">
+    <span class={`badge badge-${data.type}`}>
+      {data.type === 'cve' ? 'CVE' : data.type === 'bounty' ? 'BOUNTY' : 'RESEARCH'}
+    </span>
+
+    {severity && <span class={`badge badge-${severity}`}>{severity.toUpperCase()}</span>}
+    {cvss      && <span class="meta-item">CVSS <strong>{cvss}</strong></span>}
+    {cve       && <span class="meta-item cve-id">{cve}</span>}
+    {patched !== null && (
+      <span class={`badge ${patched ? 'badge-low' : 'badge-high'}`}>
+        {patched ? 'PATCHED' : 'UNPATCHED'}
+      </span>
+    )}
+    {platform  && <span class="meta-item">{platformLabels[platform] ?? platform}</span>}
+    {program   && <span class="meta-item">Program: <strong>{program}</strong></span>}
+    {bounty    && <span class="meta-item bounty-amount">Bounty: {bounty}</span>}
+    {reportUrl && (
+      <a href={reportUrl} class="meta-link" target="_blank" rel="noopener">
+        PUBLIC REPORT ↗
+      </a>
+    )}
+  </div>
+
+  <Content />
+
+  {refs && refs.length > 0 && (
+    <div class="references">
+      <h3>REFERENCES</h3>
+      <ul>
+        {refs.map(ref => (
+          <li><a href={ref} target="_blank" rel="noopener">{ref}</a></li>
+        ))}
+      </ul>
+    </div>
+  )}
+</Post>
+
+<style>
+  .meta-panel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.25rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+  }
+
+  .meta-item {
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+
+  .meta-item strong {
+    color: var(--text);
+  }
+
+  .cve-id {
+    font-family: var(--font-pixel);
+    font-size: 0.42rem;
+    color: var(--red);
+    letter-spacing: 0.05em;
+  }
+
+  .bounty-amount {
+    color: var(--amber);
+  }
+
+  .meta-link {
+    font-family: var(--font-pixel);
+    font-size: 0.42rem;
+    color: var(--blue);
+    letter-spacing: 0.05em;
+  }
+
+  .references {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .references h3 {
+    font-size: 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .references ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .references li {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .references a {
+    color: var(--blue);
+    word-break: break-all;
+  }
+</style>

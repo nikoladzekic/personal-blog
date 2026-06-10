@@ -1,0 +1,61 @@
+---
+import RetroNav from '../components/ui/RetroNav.astro';
+import Cursor from '../components/ui/Cursor.astro';
+import '../styles/global.css';
+import '../styles/retro.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  sector?: string;
+}
+
+const {
+  title,
+  description = 'Personal site — security research, dev notes, and an interactive tour.',
+  sector,
+} = Astro.props;
+
+const siteOrigin = Astro.url.origin;
+const pageTitle = `${title} | ndzekic.dev`;
+const ogImage = `${siteOrigin}/og.svg`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{pageTitle}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <!-- theme init: run before paint to avoid flash -->
+    <script is:inline>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = saved || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+  </head>
+  <body>
+    <Cursor />
+    <RetroNav sector={sector} />
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
