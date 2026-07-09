@@ -4,36 +4,47 @@ import Base from '../../layouts/Base.astro';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const posts = allPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const latest = posts[0]?.data.date.toLocaleDateString('en-GB', {
+  year: 'numeric', month: 'long',
+});
 ---
 
-<Base title="Blog" sector="BLOG">
+<Base title="Blog" sector="blog">
   <div class="container page-wrapper">
     <header class="page-header">
-      <p class="sector-label">BLOG</p>
-      <h1 class="page-title cursor-blink">DEV NOTES</h1>
+      <p class="sector-label"><span class="sector-num">01</span> · blog</p>
+      <h1 class="page-title">dev notes</h1>
+      <p class="page-count">
+        {posts.length} {posts.length === 1 ? 'entry' : 'entries'}{latest && ` · latest ${latest}`}
+      </p>
       <p class="page-desc">
         Software engineering, tooling, and whatever I'm tinkering with.
       </p>
     </header>
 
     {posts.length === 0 ? (
-      <p class="empty">// NO ENTRIES FOUND</p>
+      <p class="empty">// no entries found</p>
     ) : (
       <ul class="rpg-menu post-list">
         {posts.map(post => {
           const date = post.data.date.toLocaleDateString('en-GB', {
             year: 'numeric', month: 'short', day: '2-digit',
-          }).toUpperCase();
+          });
 
           return (
             <li>
               <a href={`/blog/${post.id}`}>
-                <span class="entry-title">{post.data.title}</span>
-                <span class="entry-meta">
+                <span class="entry-body">
                   <span class="entry-date">{date}</span>
-                  {post.data.tags.slice(0, 3).map(tag => (
-                    <span class="tag">{tag}</span>
-                  ))}
+                  <span class="entry-title">{post.data.title}</span>
+                  {post.data.tags.length > 0 && (
+                    <span class="entry-tags">
+                      {post.data.tags.slice(0, 3).map(tag => (
+                        <span class="tag">{tag}</span>
+                      ))}
+                    </span>
+                  )}
                 </span>
               </a>
             </li>
@@ -46,7 +57,7 @@ const posts = allPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueO
 
 <style>
   .page-wrapper {
-    padding: 3rem 1.5rem;
+    padding: 3.5rem 1.5rem;
   }
 
   .page-header {
@@ -54,53 +65,64 @@ const posts = allPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueO
   }
 
   .page-title {
-    font-size: 0.9rem;
-    margin: 0.5rem 0 1rem;
+    text-transform: lowercase;
+    margin: 0.5rem 0 0.35rem;
+  }
+
+  .page-count {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
   }
 
   .page-desc {
-    font-size: 1.1rem;
     color: var(--text-dim);
     margin: 0;
+    max-width: 56ch;
   }
 
-  .post-list a {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-  }
-
-  .entry-title {
-    font-family: var(--font-pixel);
-    font-size: 0.65rem;
-    color: var(--text);
-    line-height: 1.7;
-    letter-spacing: 0.04em;
-  }
-
-  .rpg-menu a:hover .entry-title {
-    color: var(--green);
-  }
-
-  .entry-meta {
+  .entry-body {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
   }
 
   .entry-date {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
+  }
+
+  .entry-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .rpg-menu a:hover .entry-title {
+    color: var(--primary);
+  }
+
+  .entry-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
   }
 
   .empty {
-    font-family: var(--font-pixel);
-    font-size: 0.55rem;
+    font-family: var(--font-meta);
     color: var(--text-muted);
-    letter-spacing: 0.1em;
     padding: 2rem 0;
+  }
+
+  @media (max-width: 600px) {
+    .page-wrapper {
+      padding: 2rem 1rem;
+    }
   }
 </style>

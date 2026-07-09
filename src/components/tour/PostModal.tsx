@@ -24,18 +24,40 @@ interface PostModalProps {
   onOpenFull: (slug: string) => void;
 }
 
+/* mirrors the site palette in src/styles/global.css */
+const C = {
+  bg: 'rgba(19, 16, 19, 0.95)',
+  surface: '#181418',
+  elevated: '#201a1f',
+  border: '#2e2529',
+  borderBright: '#453640',
+  primary: '#e63950',
+  accent: '#f2a33c',
+  cyan: '#67e8f9',
+  text: '#ece7e8',
+  dim: '#b3a8ab',
+  muted: '#776c72',
+};
+
+const F = {
+  display: "'Chakra Petch', sans-serif",
+  mono: "'JetBrains Mono', monospace",
+  meta: "'Space Mono', monospace",
+};
+
 const MODAL_STYLE: React.CSSProperties = {
   position: 'absolute', inset: 0,
-  background: 'rgba(0,0,0,0.92)',
+  background: C.bg,
   zIndex: 20,
   display: 'flex',
-  fontFamily: "'VT323', monospace",
+  fontFamily: F.mono,
   pointerEvents: 'all',
 };
 
 const SIDEBAR_STYLE: React.CSSProperties = {
-  width: 280,
-  borderRight: '1px solid #1e1e3a',
+  width: 300,
+  borderRight: `1px solid ${C.border}`,
+  background: C.surface,
   overflowY: 'auto',
   flexShrink: 0,
 };
@@ -43,7 +65,7 @@ const SIDEBAR_STYLE: React.CSSProperties = {
 const CONTENT_STYLE: React.CSSProperties = {
   flex: 1,
   overflowY: 'auto',
-  padding: '2rem',
+  padding: '2rem 2.5rem',
 };
 
 export function PostModal({
@@ -59,8 +81,8 @@ export function PostModal({
   }, [onClose]);
 
   const severityColor: Record<string, string> = {
-    critical: '#ff3e3e', high: '#ff6b00',
-    medium: '#ffb800', low: '#00b4ff', info: '#3d5c3d',
+    critical: '#f87171', high: C.accent,
+    medium: '#fbbf24', low: C.cyan, info: C.muted,
   };
 
   return (
@@ -68,82 +90,92 @@ export function PostModal({
       {/* Sidebar — post list */}
       <div style={SIDEBAR_STYLE}>
         <div style={{
-          padding: '1rem',
-          borderBottom: '1px solid #1e1e3a',
+          padding: '1rem 1.25rem',
+          borderBottom: `1px solid ${C.border}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <span style={{
-            fontFamily: "'Press Start 2P', monospace",
-            fontSize: '0.5rem', color: '#39ff14', letterSpacing: '0.1em',
+            fontFamily: F.meta,
+            fontSize: '0.8rem', color: C.muted, letterSpacing: '0.2em',
           }}>
-            {section.toUpperCase()}
+            <span style={{ color: C.accent }}>{'//'}</span> {section}
           </span>
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: '1px solid #1e1e3a',
-              color: '#3d5c3d', cursor: 'pointer', padding: '0.2rem 0.5rem',
-              fontFamily: "'Press Start 2P', monospace", fontSize: '0.4rem',
+              background: 'none', border: `1px solid ${C.border}`,
+              color: C.muted, cursor: 'pointer', padding: '0.2rem 0.55rem',
+              fontFamily: F.meta, fontSize: '0.7rem', letterSpacing: '0.08em',
             }}
           >
-            ESC
+            esc
           </button>
         </div>
 
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {posts.map(post => (
-            <li key={post.slug}>
-              <button
-                onClick={() => onSelect(post)}
-                style={{
-                  width: '100%', textAlign: 'left',
-                  background: selected?.slug === post.slug ? '#0f0f1a' : 'transparent',
-                  border: 'none', borderBottom: '1px solid #1e1e3a',
-                  padding: '0.75rem 1rem',
-                  cursor: 'pointer',
-                  color: selected?.slug === post.slug ? '#39ff14' : '#6b8f6b',
-                  transition: 'background 0.1s, color 0.1s',
-                }}
-              >
-                {post.severity && (
+          {posts.map((post, i) => {
+            const active = selected?.slug === post.slug;
+            return (
+              <li key={post.slug}>
+                <button
+                  onClick={() => onSelect(post)}
+                  style={{
+                    width: '100%', textAlign: 'left',
+                    background: active ? C.elevated : 'transparent',
+                    border: 'none', borderBottom: `1px solid ${C.border}`,
+                    borderLeft: `2px solid ${active ? C.primary : 'transparent'}`,
+                    padding: '0.85rem 1.1rem',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s, border-color 0.15s',
+                  }}
+                >
                   <span style={{
-                    display: 'inline-block',
-                    width: 6, height: 6,
-                    borderRadius: '50%',
-                    background: severityColor[post.severity] ?? '#3d5c3d',
-                    marginRight: '0.5rem',
-                    verticalAlign: 'middle',
-                  }} />
-                )}
-                <span style={{
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: '0.4rem', lineHeight: 1.8,
-                  letterSpacing: '0.03em',
-                  display: 'block',
-                  marginTop: post.severity ? 0 : 0,
-                }}>
-                  {post.title}
-                </span>
-                {post.cve && (
+                    fontFamily: F.meta, fontSize: '0.7rem',
+                    color: active ? C.accent : C.muted,
+                    display: 'inline-block', marginBottom: '0.25rem',
+                  }}>
+                    {String(i + 1).padStart(2, '0')}
+                    {post.severity && (
+                      <span style={{
+                        display: 'inline-block',
+                        width: 6, height: 6,
+                        borderRadius: '50%',
+                        background: severityColor[post.severity] ?? C.muted,
+                        marginLeft: '0.5rem',
+                        verticalAlign: 'middle',
+                      }} />
+                    )}
+                  </span>
                   <span style={{
-                    fontFamily: "'Press Start 2P', monospace",
-                    fontSize: '0.35rem', color: '#ff3e3e',
+                    fontFamily: F.display,
+                    fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.35,
+                    color: active ? C.primary : C.text,
+                    display: 'block',
+                  }}>
+                    {post.title}
+                  </span>
+                  {post.cve && (
+                    <span style={{
+                      fontFamily: F.meta,
+                      fontSize: '0.7rem', color: '#f87171',
+                      display: 'block', marginTop: '0.2rem',
+                    }}>
+                      {post.cve}
+                    </span>
+                  )}
+                  <span style={{
+                    fontFamily: F.meta,
+                    fontSize: '0.7rem', color: C.muted,
                     display: 'block', marginTop: '0.25rem',
                   }}>
-                    {post.cve}
+                    {new Date(post.date).toLocaleDateString('en-GB', {
+                      year: 'numeric', month: 'short', day: '2-digit',
+                    })}
                   </span>
-                )}
-                <span style={{
-                  fontSize: '0.9rem', color: '#3d5c3d',
-                  display: 'block', marginTop: '0.2rem',
-                }}>
-                  {new Date(post.date).toLocaleDateString('en-GB', {
-                    year: 'numeric', month: 'short', day: '2-digit',
-                  }).toUpperCase()}
-                </span>
-              </button>
-            </li>
-          ))}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -153,30 +185,30 @@ export function PostModal({
           <div style={{
             height: '100%', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            flexDirection: 'column', gap: '1rem',
+            flexDirection: 'column', gap: '0.75rem',
           }}>
             <span style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '0.5rem', color: '#1a7a08',
+              fontFamily: F.display,
+              fontSize: '1.1rem', fontWeight: 600, color: C.primary,
             }}>
-              SELECT AN ENTRY
+              select an entry
             </span>
-            <span style={{ fontSize: '1rem', color: '#3d5c3d' }}>
+            <span style={{ fontFamily: F.meta, fontSize: '0.8rem', color: C.muted }}>
               ← choose from the list
             </span>
           </div>
         ) : (
-          <div>
+          <div style={{ maxWidth: '72ch' }}>
             <div style={{
               display: 'flex', justifyContent: 'space-between',
               alignItems: 'flex-start', marginBottom: '1.5rem',
-              paddingBottom: '1rem', borderBottom: '1px solid #1e1e3a',
+              paddingBottom: '1rem', borderBottom: `1px solid ${C.border}`,
             }}>
               <div>
                 <h2 style={{
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: '0.65rem', color: '#39ff14',
-                  lineHeight: 1.6, margin: 0, marginBottom: '0.5rem',
+                  fontFamily: F.display,
+                  fontSize: '1.35rem', fontWeight: 700, color: C.text,
+                  lineHeight: 1.3, margin: 0, marginBottom: '0.6rem',
                 }}>
                   {selected.title}
                 </h2>
@@ -184,9 +216,9 @@ export function PostModal({
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                     {selected.tags.map(tag => (
                       <span key={tag} style={{
-                        fontFamily: "'Press Start 2P', monospace",
-                        fontSize: '0.35rem', color: '#3d5c3d',
-                        border: '1px solid #1e1e3a', padding: '0.15rem 0.35rem',
+                        fontFamily: F.meta,
+                        fontSize: '0.7rem', color: C.dim, textTransform: 'lowercase',
+                        border: `1px solid ${C.border}`, padding: '0.05rem 0.45rem',
                       }}>
                         {tag}
                       </span>
@@ -197,46 +229,50 @@ export function PostModal({
               <button
                 onClick={() => onOpenFull(selected.slug)}
                 style={{
-                  background: 'none', border: '1px solid #3d5c3d',
-                  color: '#00b4ff', cursor: 'pointer',
-                  padding: '0.3rem 0.6rem', flexShrink: 0, marginLeft: '1rem',
-                  fontFamily: "'Press Start 2P', monospace", fontSize: '0.38rem',
+                  background: 'none', border: `1px solid ${C.borderBright}`,
+                  color: C.primary, cursor: 'pointer',
+                  padding: '0.35rem 0.75rem', flexShrink: 0, marginLeft: '1rem',
+                  fontFamily: F.display, fontSize: '0.8rem', fontWeight: 600,
                   letterSpacing: '0.05em',
                 }}
               >
-                FULL PAGE ↗
+                full page ↗
               </button>
             </div>
 
             {/* Markdown body */}
-            <div style={{ fontSize: '1.15rem', lineHeight: 1.8, color: '#c8ffc8' }}>
+            <div style={{ fontFamily: F.mono, fontSize: '0.95rem', lineHeight: 1.8, color: C.text }}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   h1: ({ children }) => (
-                    <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '0.7rem', color: '#39ff14', margin: '1.5rem 0 0.75rem', lineHeight: 1.6 }}>{children}</h1>
+                    <h1 style={{ fontFamily: F.display, fontSize: '1.25rem', fontWeight: 700, color: C.primary, margin: '1.6rem 0 0.6rem', lineHeight: 1.3 }}>{children}</h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '0.6rem', color: '#39ff14', margin: '1.25rem 0 0.6rem', lineHeight: 1.6 }}>{children}</h2>
+                    <h2 style={{ fontFamily: F.display, fontSize: '1.1rem', fontWeight: 600, color: C.primary, margin: '1.5rem 0 0.6rem', lineHeight: 1.3, paddingBottom: '0.3rem', borderBottom: `1px solid ${C.border}` }}>
+                      <span style={{ color: C.muted, fontWeight: 400 }}>{'## '}</span>{children}
+                    </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '0.5rem', color: '#1a7a08', margin: '1rem 0 0.5rem', lineHeight: 1.6 }}>{children}</h3>
+                    <h3 style={{ fontFamily: F.display, fontSize: '1rem', fontWeight: 600, color: C.accent, margin: '1.25rem 0 0.5rem', lineHeight: 1.3 }}>
+                      <span style={{ color: C.muted, fontWeight: 400 }}>{'### '}</span>{children}
+                    </h3>
                   ),
                   code: ({ children, className }) => {
                     const isBlock = className?.includes('language-');
                     return isBlock ? (
-                      <pre style={{ background: '#0f0f1a', border: '1px solid #1e1e3a', padding: '1rem', overflowX: 'auto', margin: '1rem 0' }}>
-                        <code style={{ fontFamily: "'VT323', monospace", fontSize: '1rem', color: '#ffb800' }}>{children}</code>
+                      <pre style={{ background: C.elevated, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.primary}`, padding: '1rem 1.25rem', overflowX: 'auto', margin: '1rem 0' }}>
+                        <code style={{ fontFamily: F.mono, fontSize: '0.85rem', color: C.text }}>{children}</code>
                       </pre>
                     ) : (
-                      <code style={{ background: '#0f0f1a', color: '#ffb800', padding: '0.1em 0.3em', border: '1px solid #1e1e3a' }}>{children}</code>
+                      <code style={{ background: C.elevated, color: C.accent, padding: '0.1em 0.35em', border: `1px solid ${C.border}`, borderRadius: 3, fontSize: '0.85em' }}>{children}</code>
                     );
                   },
                   a: ({ children, href }) => (
-                    <a href={href} style={{ color: '#00b4ff' }} target="_blank" rel="noopener">{children}</a>
+                    <a href={href} style={{ color: C.cyan }} target="_blank" rel="noopener">{children}</a>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote style={{ borderLeft: '3px solid #1a7a08', paddingLeft: '1rem', color: '#6b8f6b', margin: '1rem 0' }}>{children}</blockquote>
+                    <blockquote style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: '1rem', color: C.dim, fontStyle: 'italic', margin: '1rem 0' }}>{children}</blockquote>
                   ),
                 }}
               >

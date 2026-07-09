@@ -5,6 +5,10 @@ import Base from '../../layouts/Base.astro';
 const allEntries = await getCollection('research', ({ data }) => !data.draft);
 const entries = allEntries.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
+const latest = entries[0]?.data.date.toLocaleDateString('en-GB', {
+  year: 'numeric', month: 'long',
+});
+
 function severityBadge(severity: string) {
   return `badge badge-${severity}`;
 }
@@ -20,59 +24,66 @@ function platformLabel(platform: string) {
 }
 ---
 
-<Base title="Research" sector="RESEARCH">
+<Base title="Research" sector="research">
   <div class="container page-wrapper">
     <header class="page-header">
-      <p class="sector-label">RESEARCH</p>
-      <h1 class="page-title cursor-blink">SECURITY RESEARCH</h1>
+      <p class="sector-label"><span class="sector-num">02</span> · research</p>
+      <h1 class="page-title">security research</h1>
+      <p class="page-count">
+        {entries.length} {entries.length === 1 ? 'entry' : 'entries'}{latest && ` · latest ${latest}`}
+      </p>
       <p class="page-desc">
         CVE disclosures, bug bounty findings, and novel technique writeups.
       </p>
     </header>
 
     <div class="filter-tabs" role="tablist" id="filter-tabs">
-      <button class="filter-tab active" data-filter="all" role="tab">ALL</button>
+      <button class="filter-tab active" data-filter="all" role="tab">all</button>
       <button class="filter-tab" data-filter="cve" role="tab">CVEs</button>
-      <button class="filter-tab" data-filter="bounty" role="tab">BUG BOUNTY</button>
-      <button class="filter-tab" data-filter="research" role="tab">TECHNIQUES</button>
+      <button class="filter-tab" data-filter="bounty" role="tab">bug bounty</button>
+      <button class="filter-tab" data-filter="research" role="tab">techniques</button>
     </div>
 
     {entries.length === 0 ? (
-      <p class="empty">// NO ENTRIES FOUND</p>
+      <p class="empty">// no entries found</p>
     ) : (
       <ul class="rpg-menu entry-list" id="entry-list">
         {entries.map(entry => {
           const date = entry.data.date.toLocaleDateString('en-GB', {
             year: 'numeric', month: 'short', day: '2-digit',
-          }).toUpperCase();
+          });
 
           return (
             <li data-type={entry.data.type}>
               <a href={`/research/${entry.id}`}>
-                <span class="entry-head">
-                  <span class={`badge badge-${entry.data.type}`}>
-                    {entry.data.type === 'cve' ? 'CVE'
-                      : entry.data.type === 'bounty' ? 'BOUNTY'
-                      : 'RESEARCH'}
+                <span class="entry-body">
+                  <span class="entry-head">
+                    <span class={`badge badge-${entry.data.type}`}>
+                      {entry.data.type === 'cve' ? 'CVE'
+                        : entry.data.type === 'bounty' ? 'BOUNTY'
+                        : 'RESEARCH'}
+                    </span>
+                    {(entry.data.type === 'cve' || entry.data.type === 'bounty') && (
+                      <span class={severityBadge(entry.data.severity)}>
+                        {entry.data.severity.toUpperCase()}
+                      </span>
+                    )}
+                    {entry.data.type === 'cve' && (
+                      <span class="cve-id">{entry.data.cve}</span>
+                    )}
+                    {entry.data.type === 'bounty' && (
+                      <span class="platform-label">{platformLabel(entry.data.platform)}</span>
+                    )}
+                    <span class="entry-date">{date}</span>
                   </span>
-                  {(entry.data.type === 'cve' || entry.data.type === 'bounty') && (
-                    <span class={severityBadge(entry.data.severity)}>
-                      {entry.data.severity.toUpperCase()}
+                  <span class="entry-title">{entry.data.title}</span>
+                  {entry.data.tags.length > 0 && (
+                    <span class="entry-tags">
+                      {entry.data.tags.slice(0, 3).map(tag => (
+                        <span class="tag">{tag}</span>
+                      ))}
                     </span>
                   )}
-                  {entry.data.type === 'cve' && (
-                    <span class="cve-id">{entry.data.cve}</span>
-                  )}
-                  {entry.data.type === 'bounty' && (
-                    <span class="platform-label">{platformLabel(entry.data.platform)}</span>
-                  )}
-                </span>
-                <span class="entry-title">{entry.data.title}</span>
-                <span class="entry-meta">
-                  <span class="entry-date">{date}</span>
-                  {entry.data.tags.slice(0, 3).map(tag => (
-                    <span class="tag">{tag}</span>
-                  ))}
                 </span>
               </a>
             </li>
@@ -103,7 +114,7 @@ function platformLabel(platform: string) {
 
 <style>
   .page-wrapper {
-    padding: 3rem 1.5rem;
+    padding: 3.5rem 1.5rem;
   }
 
   .page-header {
@@ -111,74 +122,94 @@ function platformLabel(platform: string) {
   }
 
   .page-title {
-    font-size: 0.9rem;
-    margin: 0.5rem 0 1rem;
+    text-transform: lowercase;
+    margin: 0.5rem 0 0.35rem;
+  }
+
+  .page-count {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
   }
 
   .page-desc {
-    font-size: 1.1rem;
     color: var(--text-dim);
     margin: 0;
+    max-width: 56ch;
   }
 
-  .entry-list a {
+  .entry-body {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
+    gap: 0.4rem;
+    min-width: 0;
   }
 
   .entry-head {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .cve-id {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
-    color: var(--red);
-    letter-spacing: 0.05em;
-  }
-
-  .platform-label {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
-    color: var(--purple);
-    letter-spacing: 0.05em;
-  }
-
-  .entry-title {
-    font-family: var(--font-pixel);
-    font-size: 0.65rem;
-    color: var(--text);
-    line-height: 1.7;
-    letter-spacing: 0.04em;
-  }
-
-  .rpg-menu a:hover .entry-title {
-    color: var(--green);
-  }
-
-  .entry-meta {
-    display: flex;
-    align-items: center;
     gap: 0.6rem;
     flex-wrap: wrap;
   }
 
+  .cve-id {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--danger);
+  }
+
+  .platform-label {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+
   .entry-date {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
+  }
+
+  .entry-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .rpg-menu a:hover .entry-title {
+    color: var(--primary);
+  }
+
+  .entry-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
   }
 
   .empty {
-    font-family: var(--font-pixel);
-    font-size: 0.55rem;
+    font-family: var(--font-meta);
     color: var(--text-muted);
-    letter-spacing: 0.1em;
     padding: 2rem 0;
+  }
+
+  @media (max-width: 600px) {
+    .page-wrapper {
+      padding: 2rem 1rem;
+    }
+
+    .filter-tabs {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .filter-tab {
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
   }
 </style>

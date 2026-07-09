@@ -2,18 +2,18 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="404" description="Sector not found." sector="ERROR">
+<Base title="404" description="Sector not found." sector="error">
   <div class="not-found">
-    <div class="crt-frame">
+    <div class="error-frame">
       <p class="error-code">404</p>
-      <h1>SECTOR NOT FOUND</h1>
+      <h1 class="error-title">sector not found</h1>
       <p class="error-msg">The coordinates you entered do not exist on this map.</p>
-      <div class="divider">──────────────────────</div>
+      <hr class="error-rule" />
       <nav class="error-nav">
-        <a href="/" class="error-link">▶ RETURN TO MENU</a>
-        <a href="/blog" class="error-link">▶ BLOG</a>
-        <a href="/research" class="error-link">▶ RESEARCH</a>
-        <a href="/tour" class="error-link error-link--tour">▶ INTERACTIVE TOUR</a>
+        <a href="/" class="error-link">▶ return home</a>
+        <a href="/blog" class="error-link">▶ blog</a>
+        <a href="/research" class="error-link">▶ research</a>
+        <a href="/tour" class="error-link error-link--tour">▶ interactive tour</a>
       </nav>
     </div>
   </div>
@@ -28,9 +28,9 @@ import Base from '../layouts/Base.astro';
     padding: 2rem 1rem;
   }
 
-  .crt-frame {
-    border: 3px solid var(--green-dim);
-    box-shadow: var(--glow-green), inset 0 0 40px rgba(57, 255, 20, 0.03);
+  .error-frame {
+    border: 1px solid var(--border-bright);
+    background: var(--bg-surface);
     max-width: 520px;
     width: 100%;
     padding: 3rem 2.5rem;
@@ -40,32 +40,23 @@ import Base from '../layouts/Base.astro';
   .error-code {
     font-family: var(--font-pixel);
     font-size: 2rem;
-    color: var(--amber);
+    color: var(--accent);
     margin: 0 0 1rem;
     letter-spacing: 0.1em;
   }
 
-  h1 {
-    font-family: var(--font-pixel);
-    font-size: 0.75rem;
-    color: var(--green);
+  .error-title {
+    font-size: 1.3rem;
     margin: 0 0 1rem;
-    letter-spacing: 0.08em;
   }
 
   .error-msg {
-    font-family: var(--font-mono);
-    font-size: 1.1rem;
     color: var(--text-dim);
     margin: 0 0 1.5rem;
   }
 
-  .divider {
-    font-family: var(--font-mono);
-    color: var(--border);
-    font-size: 1rem;
-    letter-spacing: 0.1em;
-    margin-bottom: 1.5rem;
+  .error-rule {
+    margin: 0 0 1.5rem;
   }
 
   .error-nav {
@@ -76,24 +67,23 @@ import Base from '../layouts/Base.astro';
   }
 
   .error-link {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
-    color: var(--text);
+    font-family: var(--font-meta);
+    font-size: 0.85rem;
+    color: var(--text-dim);
     text-decoration: none;
     letter-spacing: 0.08em;
-    transition: color 0.1s;
+    transition: color 0.15s;
   }
 
   .error-link:hover {
-    color: var(--green);
+    color: var(--primary);
   }
 
   .error-link--tour {
-    color: var(--purple);
+    color: var(--accent);
   }
 
   .error-link--tour:hover {
-    color: var(--purple);
-    text-shadow: 0 0 8px rgba(157, 78, 221, 0.35);
+    color: var(--accent);
   }
 </style>

@@ -1,5 +1,5 @@
-import { Suspense, useState, useCallback, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
 import { Room, DESK_TOP_Y, DESK_Z } from './Room';
 import { Player } from './Player';
@@ -9,6 +9,8 @@ import { Effects } from './Effects';
 import { PostModal, type PostEntry } from './PostModal';
 import { LoadingScreen } from './LoadingScreen';
 import { SceneErrorBoundary } from './SceneErrorBoundary';
+import { SpatialAudio } from './SpatialAudio';
+import { setMuted } from './sounds';
 import type { BookTextureVariant } from './usePixelTexture';
 
 interface WorldProps {
@@ -44,6 +46,29 @@ const ZONE_LABELS: Record<string, string> = {
   research: 'RESEARCH LOG',
 };
 
+/**
+ * Nothing that casts a shadow ever moves (the player has no body, books only
+ * pulse emissive), so re-rendering the shadow map every frame is pure waste.
+ * Let it settle for a few frames after mount/mode-switch, then freeze it.
+ */
+function FrozenShadows({ isDark }: { isDark: boolean }) {
+  const gl = useThree((s) => s.gl);
+  const frames = useRef(0);
+  useEffect(() => {
+    frames.current = 0;
+    gl.shadowMap.autoUpdate = true;
+    return () => {
+      gl.shadowMap.autoUpdate = true;
+    };
+  }, [gl, isDark]);
+  useFrame(() => {
+    if (frames.current <= 30 && frames.current++ === 30) {
+      gl.shadowMap.autoUpdate = false;
+    }
+  });
+  return null;
+}
+
 function WorldScene({
   onNearBook,
   nearBook,
@@ -69,6 +94,8 @@ function WorldScene({
         />
       ))}
       <Player onNearTerminal={onNearBook} terminalPositions={BOOKS} />
+      <SpatialAudio />
+      <FrozenShadows isDark={isDark} />
       <Effects isDark={isDark} />
     </>
   );
@@ -80,6 +107,14 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
   const [selectedPost, setSelectedPost] = useState<PostEntry | null>(null);
   const [locked, setLocked] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+
+  const toggleSound = useCallback(() => {
+    setSoundOn((v) => {
+      setMuted(v);
+      return !v;
+    });
+  }, []);
 
   const handleNearBook = useCallback((id: string | null) => {
     setNearBook(id);
@@ -129,15 +164,15 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
           transform: 'translateX(-50%)',
           fontFamily: "'Press Start 2P', monospace",
           fontSize: '0.4rem',
-          color: '#3d5c3d',
+          color: '#9a8d92',
           textDecoration: 'none',
           letterSpacing: '0.1em',
           zIndex: 30,
           pointerEvents: 'all',
           transition: 'color 0.1s',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#39ff14')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = '#3d5c3d')}
+        onMouseEnter={(e) => (e.currentTarget.style.color = '#e63950')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = '#9a8d92')}
       >
         ← EXIT TOUR
       </a>
@@ -151,9 +186,9 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
           right: '1.5rem',
           fontFamily: "'Press Start 2P', monospace",
           fontSize: '0.4rem',
-          color: isDark ? '#ffb800' : '#6b8f6b',
+          color: isDark ? '#f2a33c' : '#b3a8ab',
           background: 'rgba(0,0,0,0.65)',
-          border: `1px solid ${isDark ? '#ffb800' : '#39ff14'}`,
+          border: `1px solid ${isDark ? '#f2a33c' : '#e63950'}`,
           padding: '0.5rem 0.75rem',
           letterSpacing: '0.08em',
           cursor: 'pointer',
@@ -164,12 +199,47 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
         {isDark ? 'DAY MODE' : 'NIGHT MODE'}
       </button>
 
+      <button
+        type="button"
+        onClick={toggleSound}
+        style={{
+          position: 'absolute',
+          top: '4.2rem',
+          right: '1.5rem',
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: '0.4rem',
+          color: soundOn ? '#b3a8ab' : '#8f6b6b',
+          background: 'rgba(0,0,0,0.65)',
+          border: `1px solid ${soundOn ? '#e63950' : '#ff4444'}`,
+          padding: '0.5rem 0.75rem',
+          letterSpacing: '0.08em',
+          cursor: 'pointer',
+          zIndex: 30,
+          pointerEvents: 'all',
+        }}
+      >
+        {soundOn ? 'SOUND: ON' : 'SOUND: OFF'}
+      </button>
+
       <SceneErrorBoundary>
         <Canvas
-          style={{ width: '100%', height: '100%' }}
+          // imageRendering is inherited by the inner <canvas>: the half-res
+          // buffer upscales nearest-neighbor into the same 2px blocks the old
+          // Pixelation pass produced, for a quarter of the fragment work
+          style={{ width: '100%', height: '100%', imageRendering: 'pixelated' }}
           shadows={isDark ? false : 'soft'}
           camera={{ fov: 70, near: 0.1, far: 100 }}
-          gl={{ antialias: true, toneMappingExposure: isDark ? 1.0 : 1.35 }}
+          // antialias off: the EffectComposer renders via a non-MSAA buffer, so
+          // canvas MSAA costs memory/fill without smoothing a single edge
+          gl={{
+            antialias: false,
+            stencil: false,
+            powerPreference: 'high-performance',
+            toneMappingExposure: isDark ? 1.0 : 1.35,
+          }}
+          // half of a CSS pixel per buffer pixel = the retro 2px-block look,
+          // rendered instead of post-processed
+          dpr={0.5}
         >
           <color attach="background" args={[isDark ? '#050510' : '#8fc7f2']} />
           <fog attach="fog" args={[isDark ? '#08081a' : '#c4ddf1', 14, 26]} />

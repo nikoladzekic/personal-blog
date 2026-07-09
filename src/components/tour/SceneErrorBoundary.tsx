@@ -39,14 +39,14 @@ export class SceneErrorBoundary extends Component<Props, State> {
           }}
         >
           <p style={{ fontSize: '0.55rem', letterSpacing: '0.1em' }}>SCENE CRASHED</p>
-          <p style={{ fontSize: '0.4rem', color: '#3d5c3d', letterSpacing: '0.08em' }}>
+          <p style={{ fontSize: '0.4rem', color: '#9a8d92', letterSpacing: '0.08em' }}>
             WebGL OR ASSET LOAD FAILED
           </p>
           <a
             href="/tour"
             style={{
               fontSize: '0.45rem',
-              color: '#39ff14',
+              color: '#e63950',
               textDecoration: 'none',
               letterSpacing: '0.1em',
             }}
@@ -57,7 +57,7 @@ export class SceneErrorBoundary extends Component<Props, State> {
             href="/"
             style={{
               fontSize: '0.4rem',
-              color: '#6b8f6b',
+              color: '#b3a8ab',
               textDecoration: 'none',
               letterSpacing: '0.08em',
             }}

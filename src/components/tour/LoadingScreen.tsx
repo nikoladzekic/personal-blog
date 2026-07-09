@@ -40,7 +40,7 @@ export function LoadingScreen() {
         .tour-loading-panel {
           position: relative;
           padding: 2rem 2.5rem;
-          border: 2px solid #39ff14;
+          border: 2px solid #e63950;
           min-width: 280px;
         }
         .tour-loading-panel::before,
@@ -49,7 +49,7 @@ export function LoadingScreen() {
           position: absolute;
           width: 12px;
           height: 12px;
-          border-color: #39ff14;
+          border-color: #f2a33c;
           border-style: solid;
         }
         .tour-loading-panel::before {
@@ -67,7 +67,7 @@ export function LoadingScreen() {
           position: absolute;
           width: 12px;
           height: 12px;
-          border-color: #39ff14;
+          border-color: #f2a33c;
           border-style: solid;
         }
         .tour-loading-bracket-tl {
@@ -82,15 +82,15 @@ export function LoadingScreen() {
         }
         .tour-loading-bar {
           height: 8px;
-          border: 1px solid #3d5c3d;
+          border: 1px solid #9a8d92;
           margin-top: 1.25rem;
-          background: #0d1a0d;
+          background: #201a1f;
         }
         .tour-loading-fill {
           height: 100%;
-          background: #39ff14;
+          background: #e63950;
           transition: width 0.15s ease-out;
-          box-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
+          box-shadow: 0 0 8px rgba(230, 57, 80, 0.5);
         }
       `}</style>
 
@@ -100,7 +100,7 @@ export function LoadingScreen() {
 
         <p
           style={{
-            color: '#39ff14',
+            color: '#e63950',
             fontSize: '0.5rem',
             letterSpacing: '0.12em',
             margin: 0,
@@ -110,7 +110,7 @@ export function LoadingScreen() {
         </p>
         <p
           style={{
-            color: '#3d5c3d',
+            color: '#9a8d92',
             fontSize: '0.38rem',
             letterSpacing: '0.1em',
             margin: '0.75rem 0 0',
@@ -124,7 +124,7 @@ export function LoadingScreen() {
         </div>
         <p
           style={{
-            color: '#6b8f6b',
+            color: '#b3a8ab',
             fontSize: '0.4rem',
             letterSpacing: '0.1em',
             margin: '0.5rem 0 0',

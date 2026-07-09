@@ -1,120 +1,133 @@
 /* ── Pixel card ──────────────────────────────────────────────────────────── */
 .pixel-card {
   background: var(--bg-surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   padding: 1.25rem 1.5rem;
   position: relative;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 
 .pixel-card:hover {
-  border-color: var(--green-dim);
-  box-shadow: 0 0 0 1px var(--green-dim), inset 0 0 20px rgba(57, 255, 20, 0.03);
+  border-color: var(--border-bright);
 }
 
-/* pixel corner accents */
+/* pixel corner accents — the one surviving pixel flourish */
 .pixel-card::before,
 .pixel-card::after {
   content: '';
   position: absolute;
   width: 6px;
   height: 6px;
-  background: var(--green-dim);
+  background: var(--primary);
 }
 
 .pixel-card::before { top: -1px; left: -1px; }
 .pixel-card::after  { bottom: -1px; right: -1px; }
 
-/* ── Retro button ────────────────────────────────────────────────────────── */
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn-retro {
-  font-family: var(--font-pixel);
-  font-size: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   color: var(--bg);
-  background: var(--green);
-  border: none;
-  padding: 0.6rem 1.2rem;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 0.5rem 1.2rem;
   cursor: pointer;
   display: inline-block;
   text-decoration: none;
-  image-rendering: pixelated;
-  transition: background 0.1s, box-shadow 0.1s;
-  letter-spacing: 0.05em;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .btn-retro:hover {
-  background: var(--amber);
-  box-shadow: var(--glow-amber);
+  background: var(--accent);
+  border-color: var(--accent);
   color: var(--bg);
 }
 
 .btn-retro-outline {
   background: transparent;
-  color: var(--green);
-  border: 2px solid var(--green);
+  color: var(--primary);
+  border: 1px solid var(--border-bright);
 }
 
 .btn-retro-outline:hover {
-  background: var(--green);
-  color: var(--bg);
-  box-shadow: var(--glow-green);
+  background: var(--wash-primary);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 /* ── Severity badges ─────────────────────────────────────────────────────── */
 .badge {
-  font-family: var(--font-pixel);
-  font-size: 0.45rem;
-  padding: 0.25rem 0.5rem;
+  font-family: var(--font-meta);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
   letter-spacing: 0.08em;
   display: inline-block;
   text-transform: uppercase;
+  border: 1px solid currentColor;
 }
 
-.badge-critical { background: var(--red);    color: #fff; }
-.badge-high     { background: #ff6b00;       color: #fff; }
-.badge-medium   { background: var(--amber);  color: var(--bg); }
-.badge-low      { background: var(--blue);   color: var(--bg); }
-.badge-info     { background: var(--border); color: var(--text); }
+.badge-critical { color: var(--danger);   }
+.badge-high     { color: var(--accent);   }
+.badge-medium   { color: var(--warn);     }
+.badge-low      { color: var(--accent-2); }
+.badge-info     { color: var(--text-muted); }
 
-.badge-cve      { background: var(--red);    color: #fff; }
-.badge-bounty   { background: var(--purple); color: #fff; }
-.badge-research { background: var(--blue);   color: var(--bg); }
+.badge-cve      { color: var(--danger);   }
+.badge-bounty   { color: var(--accent);   }
+.badge-research { color: var(--accent-2); }
 
 /* ── Tag pill ────────────────────────────────────────────────────────────── */
 .tag {
-  font-family: var(--font-pixel);
-  font-size: 0.45rem;
+  font-family: var(--font-meta);
+  font-size: 0.7rem;
   color: var(--text-dim);
-  border: 1px solid #2a2a4a;
-  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.45rem;
   display: inline-block;
-  letter-spacing: 0.05em;
-  image-rendering: pixelated;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
 }
 
-/* ── Section header ──────────────────────────────────────────────────────── */
+/* ── Section header: "00 · whoami" pattern ───────────────────────────────── */
 .sector-label {
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-meta);
+  font-size: 0.8rem;
   color: var(--text-muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
 }
 
-.sector-label::before {
-  content: '> ';
-  color: var(--green-dim);
+.sector-label::after {
+  content: '';
+  flex: 1;
+  min-width: 2rem;
+  height: 1px;
+  background: linear-gradient(to right, var(--border-bright), transparent);
 }
 
-/* ── RPG menu list ───────────────────────────────────────────────────────── */
+.sector-label .sector-num {
+  color: var(--accent);
+}
+
+/* ── Entry list ──────────────────────────────────────────────────────────── */
 .rpg-menu {
   list-style: none;
   padding: 0;
-  border: 2px solid var(--green-dim);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
 }
 
 .rpg-menu li {
-  border-bottom: 1px solid var(--green-dim);
+  border-bottom: 1px solid var(--border);
 }
 
 .rpg-menu li:last-child {
@@ -125,47 +138,38 @@
   display: flex;
   align-items: baseline;
   gap: 1rem;
-  padding: 1rem 1rem;
+  padding: 1.1rem 1.25rem;
   color: var(--text);
-  font-size: 1.1rem;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
-  border-left: 3px solid transparent;
+  font-size: 1rem;
+  transition: background 0.15s, border-color 0.15s;
+  border-left: 2px solid transparent;
   text-decoration: none;
 }
 
 .rpg-menu a::before {
   content: '▶';
-  font-size: 0.55rem;
-  color: var(--green-dim);
+  font-size: 0.5rem;
+  color: var(--border-bright);
   flex-shrink: 0;
-  transition: color 0.1s, transform 0.1s;
+  align-self: center;
+  transition: color 0.15s, transform 0.15s;
 }
 
 .rpg-menu a:hover {
-  background: rgba(57, 255, 20, 0.04);
-  color: var(--green);
-  border-left-color: var(--green);
+  background: var(--wash-primary);
+  border-left-color: var(--accent);
 }
 
 .rpg-menu a:hover::before {
-  color: var(--green);
+  color: var(--accent);
   transform: translateX(3px);
 }
 
-/* ── Dialog / post body ──────────────────────────────────────────────────── */
+/* ── Post body surface ───────────────────────────────────────────────────── */
 .dialog-box {
   background: var(--bg-surface);
-  border: 2px solid var(--green-dim);
-  padding: 2rem;
-  position: relative;
-}
-
-.dialog-box::before {
-  content: '';
-  position: absolute;
-  top: 4px; left: 4px; right: 4px; bottom: 4px;
   border: 1px solid var(--border);
-  pointer-events: none;
+  padding: 2rem 2.25rem;
 }
 
 /* ── Container ───────────────────────────────────────────────────────────── */
@@ -179,32 +183,32 @@
 .filter-tabs {
   display: flex;
   gap: 0;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   width: fit-content;
   margin-bottom: 2rem;
 }
 
 .filter-tab {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  padding: 0.5rem 0.9rem;
+  font-family: var(--font-meta);
+  font-size: 0.75rem;
+  padding: 0.45rem 0.9rem;
   color: var(--text-muted);
   cursor: pointer;
   border: none;
   background: transparent;
   border-right: 1px solid var(--border);
   letter-spacing: 0.08em;
-  transition: color 0.1s, background 0.1s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .filter-tab:last-child { border-right: none; }
 
 .filter-tab:hover,
 .filter-tab.active {
-  color: var(--green);
+  color: var(--primary);
   background: var(--bg-elevated);
 }
 
 .filter-tab.active {
-  box-shadow: inset 0 -2px 0 var(--green);
+  box-shadow: inset 0 -2px 0 var(--primary);
 }

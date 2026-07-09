@@ -84,14 +84,15 @@ const platformLabels: Record<string, string> = {
     padding: 1rem 1.25rem;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
     margin-bottom: 2rem;
     font-family: var(--font-mono);
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .meta-item {
     color: var(--text-dim);
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .meta-item strong {
@@ -99,20 +100,19 @@ const platformLabels: Record<string, string> = {
   }
 
   .cve-id {
-    font-family: var(--font-pixel);
-    font-size: 0.42rem;
-    color: var(--red);
-    letter-spacing: 0.05em;
+    font-family: var(--font-meta);
+    font-size: 0.8rem;
+    color: var(--danger);
   }
 
   .bounty-amount {
-    color: var(--amber);
+    color: var(--warn);
   }
 
   .meta-link {
-    font-family: var(--font-pixel);
-    font-size: 0.42rem;
-    color: var(--blue);
+    font-family: var(--font-meta);
+    font-size: 0.8rem;
+    color: var(--accent-2);
     letter-spacing: 0.05em;
   }
 
@@ -123,7 +123,7 @@ const platformLabels: Record<string, string> = {
   }
 
   .references h3 {
-    font-size: 0.65rem;
+    font-size: 1rem;
     margin-bottom: 1rem;
   }
 
@@ -138,7 +138,7 @@ const platformLabels: Record<string, string> = {
   }
 
   .references a {
-    color: var(--blue);
+    color: var(--accent-2);
     word-break: break-all;
   }
 </style>

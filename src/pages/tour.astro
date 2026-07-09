@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import Tour from '../layouts/Tour.astro';
+import { World } from '../components/tour/World';
+import type { PostEntry } from '../components/tour/PostModal';
+
+const formatDate = (d: Date) =>
+  d
+    .toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' })
+    .toUpperCase();
+
+const blogEntries = await getCollection('blog', ({ data }) => !data.draft);
+const blogPosts: PostEntry[] = blogEntries
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map((post) => ({
+    slug: post.id,
+    title: post.data.title,
+    date: formatDate(post.data.date),
+    tags: post.data.tags,
+    body: post.body ?? '',
+  }));
+
+const researchEntries = await getCollection('research', ({ data }) => !data.draft);
+const researchPosts: PostEntry[] = researchEntries
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map((post) => ({
+    slug: post.id,
+    title: post.data.title,
+    date: formatDate(post.data.date),
+    tags: post.data.tags,
+    body: post.body ?? '',
+    type: post.data.type,
+    severity: 'severity' in post.data ? post.data.severity : undefined,
+    cve: 'cve' in post.data ? post.data.cve : undefined,
+    program: 'program' in post.data ? post.data.program : undefined,
+    platform: 'platform' in post.data ? post.data.platform : undefined,
+  }));
+---
+
+<Tour>
+  <World client:only="react" blogPosts={blogPosts} researchPosts={researchPosts} />
+</Tour>

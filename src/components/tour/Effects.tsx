@@ -2,9 +2,10 @@ import {
   EffectComposer,
   Bloom,
   Vignette,
-  Pixelation,
   SSAO,
+  ToneMapping,
 } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 
 interface EffectsProps {
   isDark?: boolean;
@@ -13,6 +14,10 @@ interface EffectsProps {
 export function Effects({ isDark = false }: EffectsProps) {
   return (
     <EffectComposer multisampling={0} enableNormalPass>
+      {/* full-quality AO relative to the buffer. The canvas already renders at
+          dpr 0.5, so this costs ~¼ of the original full-res AO — and A/B
+          measurement showed the cheap 8-sample/half-scale variant (which made
+          bright day walls visibly grainy) only bought ~2fps. Don't re-cheapen. */}
       <SSAO
         samples={16}
         radius={0.05}
@@ -30,7 +35,10 @@ export function Effects({ isDark = false }: EffectsProps) {
         radius={isDark ? 0.5 : 0.35}
       />
 
-      <Pixelation granularity={2} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+
+      {/* the retro 2px pixelation now comes free from the half-res canvas
+          upscaling with image-rendering: pixelated (see World.tsx dpr) */}
 
       <Vignette offset={0.5} darkness={isDark ? 0.35 : 0.18} />
     </EffectComposer>

@@ -6,8 +6,9 @@ const { sector } = Astro.props;
 const currentPath = Astro.url.pathname;
 
 const navLinks = [
-  { href: '/blog', label: 'BLOG' },
-  { href: '/research', label: 'RESEARCH' },
+  { href: '/blog', label: 'blog' },
+  { href: '/research', label: 'research' },
+  { href: '/tour', label: 'tour' },
 ];
 ---
 
@@ -22,7 +23,7 @@ const navLinks = [
     {sector && (
       <span class="nav-sector">
         <span class="sector-sep">/</span>
-        <span class="sector-name">{sector}</span>
+        <span class="sector-name">{sector.toLowerCase()}</span>
       </span>
     )}
 
@@ -74,7 +75,8 @@ const navLinks = [
     position: sticky;
     top: 0;
     z-index: 100;
-    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border);
     padding: 0.75rem 0;
   }
@@ -86,59 +88,62 @@ const navLinks = [
   }
 
   .nav-logo {
-    font-family: var(--font-pixel);
-    font-size: 0.55rem;
-    color: var(--green);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
     text-decoration: none;
     white-space: nowrap;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
   }
 
-  .nav-logo:hover {
-    text-shadow: 0 0 3px rgba(57, 255, 20, 0.4);
+  .nav-logo:hover .logo-text {
+    color: var(--primary);
   }
 
-  .logo-bracket { color: var(--green-dim); }
+  .logo-bracket { color: var(--accent); }
 
   .nav-sector {
-    font-family: var(--font-pixel);
-    font-size: 0.5rem;
+    font-family: var(--font-meta);
+    font-size: 0.8rem;
     color: var(--text-muted);
     letter-spacing: 0.1em;
   }
 
   .sector-sep {
-    color: var(--border);
+    color: var(--border-bright);
     margin-right: 0.5rem;
   }
 
   .sector-name {
-    color: var(--amber);
+    color: var(--accent);
   }
 
   .nav-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.75rem;
     margin-left: auto;
   }
 
   .nav-link {
-    font-family: var(--font-pixel);
-    font-size: 0.5rem;
-    color: var(--text-muted);
+    font-family: var(--font-meta);
+    font-size: 0.85rem;
+    color: var(--text-dim);
     text-decoration: none;
-    letter-spacing: 0.1em;
-    transition: color 0.1s;
+    letter-spacing: 0.08em;
+    transition: color 0.15s;
   }
 
   .nav-link:hover,
   .nav-link.active {
-    color: var(--green);
+    color: var(--primary);
   }
 
   .nav-link.active::before {
     content: '▶ ';
-    color: var(--green-dim);
+    font-size: 0.55em;
+    vertical-align: middle;
+    color: var(--accent);
   }
 
   .theme-toggle {
@@ -155,8 +160,8 @@ const navLinks = [
   }
 
   .theme-toggle:hover {
-    color: var(--green);
-    border-color: var(--green-dim);
+    color: var(--primary);
+    border-color: var(--border-bright);
   }
 
   .theme-icon {
@@ -166,5 +171,21 @@ const navLinks = [
 
   @media (max-width: 600px) {
     .nav-sector { display: none; }
+
+    .nav-inner {
+      gap: 0.75rem;
+    }
+
+    .nav-links {
+      gap: 1rem;
+    }
+
+    .nav-logo {
+      font-size: 0.9rem;
+    }
+
+    .nav-link {
+      font-size: 0.8rem;
+    }
   }
 </style>

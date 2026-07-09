@@ -15,14 +15,14 @@ const formatted = date.toLocaleDateString('en-GB', {
   year: 'numeric',
   month: 'short',
   day: '2-digit',
-}).toUpperCase();
+});
 ---
 
 <Base title={title} description={description} sector={sector}>
   <div class="container post-wrapper">
     <header class="post-header">
-      <p class="sector-label">{sector}</p>
-      <h1 class="post-title cursor-blink">{title}</h1>
+      <p class="sector-label"><span class="sector-num">//</span> {sector.toLowerCase()}</p>
+      <h1 class="post-title">{title}</h1>
       <div class="post-meta">
         <span class="post-date">{formatted}</span>
         {tags.length > 0 && (
@@ -39,7 +39,7 @@ const formatted = date.toLocaleDateString('en-GB', {
 
     <footer class="post-footer">
       <a href={`/${sector.toLowerCase()}`} class="btn-retro-outline btn-retro">
-        ← BACK
+        ← back
       </a>
     </footer>
   </div>
@@ -47,7 +47,7 @@ const formatted = date.toLocaleDateString('en-GB', {
 
 <style>
   .post-wrapper {
-    padding: 3rem 1.5rem;
+    padding: 3.5rem 1.5rem;
   }
 
   .post-header {
@@ -55,23 +55,22 @@ const formatted = date.toLocaleDateString('en-GB', {
   }
 
   .post-title {
-    font-size: 0.9rem;
-    margin: 0.75rem 0 1rem;
-    line-height: 1.6;
+    font-size: 1.7rem;
+    margin: 0.6rem 0 1rem;
+    line-height: 1.3;
   }
 
   .post-meta {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.25rem;
     flex-wrap: wrap;
   }
 
   .post-date {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
+    font-family: var(--font-meta);
+    font-size: 0.8rem;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
   }
 
   .post-tags {
@@ -81,13 +80,31 @@ const formatted = date.toLocaleDateString('en-GB', {
   }
 
   .prose {
-    font-size: 1.25rem;
     line-height: 1.8;
+    max-width: 72ch;
   }
 
   .post-footer {
     margin-top: 3rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .post-wrapper {
+      padding: 2rem 1rem;
+    }
+
+    .post-title {
+      font-size: 1.35rem;
+    }
+
+    .dialog-box {
+      padding: 1.25rem;
+    }
+
+    pre {
+      padding: 1rem;
+    }
   }
 </style>

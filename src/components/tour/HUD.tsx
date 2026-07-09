@@ -44,7 +44,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
         .hud-enter-panel {
           position: relative;
           padding: 2rem 2.5rem;
-          border: 2px solid #39ff14;
+          border: 2px solid #e63950;
           text-align: center;
         }
         .hud-enter-panel::before,
@@ -53,7 +53,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
           position: absolute;
           width: 14px;
           height: 14px;
-          border-color: #39ff14;
+          border-color: #f2a33c;
           border-style: solid;
         }
         .hud-enter-panel::before {
@@ -71,7 +71,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
           position: absolute;
           width: 14px;
           height: 14px;
-          border-color: #39ff14;
+          border-color: #f2a33c;
           border-style: solid;
         }
         .hud-br-tr {
@@ -93,7 +93,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             <span className="hud-br-bl" aria-hidden />
             <p
               style={{
-                color: '#39ff14',
+                color: '#e63950',
                 fontSize: '0.65rem',
                 letterSpacing: '0.1em',
                 marginBottom: '1rem',
@@ -101,7 +101,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             >
               CLICK TO ENTER
             </p>
-            <p style={{ color: '#3d5c3d', fontSize: '0.45rem', letterSpacing: '0.08em', margin: 0 }}>
+            <p style={{ color: '#9a8d92', fontSize: '0.45rem', letterSpacing: '0.08em', margin: 0 }}>
               WASD TO MOVE · MOUSE TO LOOK · ESC TO EXIT
             </p>
           </div>
@@ -114,7 +114,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             position: 'absolute',
             top: '1.5rem',
             left: '1.5rem',
-            color: '#3d5c3d',
+            color: '#9a8d92',
             fontSize: '0.45rem',
             letterSpacing: '0.12em',
           }}
@@ -129,7 +129,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             position: 'absolute',
             top: '1.5rem',
             right: '1.5rem',
-            color: '#3d5c3d',
+            color: '#9a8d92',
             fontSize: '0.4rem',
             letterSpacing: '0.1em',
           }}
@@ -157,7 +157,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
               position: 'absolute',
               width: 2,
               height: 12,
-              background: nearTerminal ? '#39ff14' : 'rgba(200,255,200,0.5)',
+              background: nearTerminal ? '#e63950' : 'rgba(236,231,232,0.5)',
             }}
           />
           <div
@@ -165,7 +165,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
               position: 'absolute',
               width: 12,
               height: 2,
-              background: nearTerminal ? '#39ff14' : 'rgba(200,255,200,0.5)',
+              background: nearTerminal ? '#e63950' : 'rgba(236,231,232,0.5)',
             }}
           />
         </div>
@@ -178,10 +178,10 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             bottom: '3rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(0,0,0,0.7)',
-            border: '1px solid #39ff14',
+            background: 'rgba(10,7,8,0.8)',
+            border: '1px solid #e63950',
             padding: '0.5rem 1rem',
-            color: '#39ff14',
+            color: '#f2a33c',
             fontSize: '0.5rem',
             letterSpacing: '0.1em',
             whiteSpace: 'nowrap',

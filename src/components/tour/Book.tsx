@@ -80,6 +80,52 @@ function ResearchTablet({
   return <primitive object={model} rotation={[0, 0.12, 0.08]} />;
 }
 
+/* Floating interactable label with a soft dark outline for readability,
+   colored to match the site palette (crimson primary / gold accent). */
+function InteractLabel({ label, isNear }: { label: string; isNear: boolean }) {
+  const ref = useRef<THREE.Group>(null!);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (ref.current) {
+      ref.current.position.y = 0.28 + Math.sin(t * 1.8) * 0.01;
+    }
+  });
+
+  return (
+    <group ref={ref} position={[0, 0.28, 0.08]}>
+      <Text
+        fontSize={0.055}
+        color={isNear ? '#f2a33c' : '#cbbfc2'}
+        anchorX="center"
+        anchorY="bottom"
+        maxWidth={1.2}
+        outlineWidth={0.007}
+        outlineBlur={0.01}
+        outlineColor="#0a0708"
+        outlineOpacity={0.95}
+      >
+        {label}
+      </Text>
+      {isNear && (
+        <Text
+          position={[0, -0.075, 0]}
+          fontSize={0.04}
+          color="#e63950"
+          anchorX="center"
+          anchorY="top"
+          outlineWidth={0.004}
+          outlineBlur={0.006}
+          outlineColor="#0a0708"
+          outlineOpacity={0.95}
+        >
+          [E] OPEN
+        </Text>
+      )}
+    </group>
+  );
+}
+
 export function Book({ position, label, variant, isNear, isDark = false }: BookProps) {
   const groupRef = useRef<THREE.Group>(null!);
   const coverMatRef = useRef<THREE.MeshStandardMaterial>(null!);
@@ -128,27 +174,14 @@ export function Book({ position, label, variant, isNear, isDark = false }: BookP
           distance={1.8}
           decay={2}
         />
-        <Text
-          position={[0, 0.28, 0.08]}
-          fontSize={0.055}
-          color={isNear ? '#7ab4ff' : '#4a6a9a'}
-          anchorX="center"
-          anchorY="bottom"
-          maxWidth={1.2}
-        >
-          {label}
-        </Text>
-        {isNear && (
-          <Text position={[0, 0.2, 0.08]} fontSize={0.04} color="#7ab4ff" anchorX="center" anchorY="top">
-            [E] OPEN
-          </Text>
-        )}
+        <InteractLabel label={label} isNear={isNear} />
       </group>
     );
   }
 
   return (
-    <group ref={groupRef} position={[position[0], position[1], position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+    <group ref={groupRef} position={[position[0], position[1], position[2]]}>
+      <group rotation={[-Math.PI / 2, 0, 0]}>
       <mesh position={[0.01, 0, -0.01]}>
         <boxGeometry args={[0.3, 0.42, 0.04]} />
         <meshStandardMaterial color="#f0ead8" roughness={0.9} />
@@ -198,21 +231,8 @@ export function Book({ position, label, variant, isNear, isDark = false }: BookP
         distance={1.8}
         decay={2}
       />
-      <Text
-        position={[0, 0.28, 0.08]}
-        fontSize={0.055}
-        color={isNear ? '#39ff14' : '#6b8f6b'}
-        anchorX="center"
-        anchorY="bottom"
-        maxWidth={1.2}
-      >
-        {label}
-      </Text>
-      {isNear && (
-        <Text position={[0, 0.2, 0.08]} fontSize={0.04} color="#39ff14" anchorX="center" anchorY="top">
-          [E] OPEN
-        </Text>
-      )}
+      </group>
+      <InteractLabel label={label} isNear={isNear} />
     </group>
   );
 }

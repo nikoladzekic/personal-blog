@@ -85,7 +85,7 @@ export function Room({ isDark = false }: RoomProps) {
       <group position={[-WIDTH / 2 + 0.07, 1.74, 0.35]} rotation={[0, Math.PI / 2, 0]}>
         <mesh>
           <planeGeometry args={[2.4, 1.55]} />
-          <WindowView fallbackMap={tex.outside} isDark={isDark} />
+          <WindowView isDark={isDark} />
         </mesh>
         {[
           { pos: [0, 0.825, 0.015] as [number, number, number], args: [2.58, 0.075, 0.06] as [number, number, number] },
@@ -260,14 +260,16 @@ export function Room({ isDark = false }: RoomProps) {
         </>
       ) : (
         <>
-          <ambientLight intensity={0.9} />
-          <hemisphereLight args={['#eef8ff', '#9a7a50', 1.0]} />
+          <ambientLight intensity={0.45} />
+          <hemisphereLight args={['#eef8ff', '#9a7a50', 0.55]} />
           <directionalLight
             castShadow
             position={[-6, 5, 3]}
-            intensity={2.4}
+            intensity={1.7}
             color="#fff5c8"
-            shadow-mapSize={[1024, 1024]}
+            // 2048 is free at runtime: FrozenShadows bakes this map once and
+            // stops re-rendering it, and the finer map dithers/aliases less
+            shadow-mapSize={[2048, 2048]}
             shadow-camera-left={-6}
             shadow-camera-right={6}
             shadow-camera-top={6}
@@ -276,8 +278,8 @@ export function Room({ isDark = false }: RoomProps) {
             shadow-camera-far={22}
             shadow-bias={-0.0002}
           />
-          <directionalLight position={[2, 8, -2]} intensity={0.7} color="#d8eeff" />
-          <pointLight position={[-WIDTH / 2 + 1, 2.1, 0.5]} intensity={9} color="#d8f0ff" distance={11} decay={1.1} />
+          <directionalLight position={[2, 8, -2]} intensity={0.5} color="#d8eeff" />
+          <pointLight position={[-WIDTH / 2 + 1, 2.1, 0.5]} intensity={6} color="#d8f0ff" distance={11} decay={1.1} />
           <pointLight position={[1.05, DESK_TOP_Y + 0.55, DESK_Z + 0.45]} intensity={2.5} color="#7ab4ff" distance={2.8} decay={1.8} />
           <pointLight
             position={[WORKBENCH_X, WORKBENCH_TOP_Y + 0.35, WORKBENCH_Z]}

@@ -1,47 +1,114 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+
+const blogPosts = await getCollection('blog', ({ data }) => !data.draft);
+const researchEntries = await getCollection('research', ({ data }) => !data.draft);
+
+type Entry = {
+  href: string;
+  title: string;
+  date: Date;
+  kind: string;
+  tags: string[];
+};
+
+const entries: Entry[] = [
+  ...blogPosts.map((p) => ({
+    href: `/blog/${p.id}`,
+    title: p.data.title,
+    date: p.data.date,
+    kind: 'blog',
+    tags: p.data.tags,
+  })),
+  ...researchEntries.map((e) => ({
+    href: `/research/${e.id}`,
+    title: e.data.title,
+    date: e.data.date,
+    kind: e.data.type === 'cve' ? 'cve' : e.data.type === 'bounty' ? 'bounty' : 'research',
+    tags: e.data.tags,
+  })),
+]
+  .sort((a, b) => b.date.valueOf() - a.date.valueOf())
+  .slice(0, 5);
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short' });
+}
 ---
 
-<Base title="Home" description="Security researcher & developer. Interactive portfolio with retro FPS tour.">
-  <div class="landing">
-    <!-- CRT screen frame -->
-    <div class="crt-frame">
-      <div class="crt-inner">
-        <div class="title-block">
-          <p class="pre-title">// LOADING PROFILE...</p>
-          <h1 class="site-title cursor-blink">ndzekic.dev</h1>
-          <p class="tagline">security researcher &amp; developer</p>
-        </div>
+<Base title="Home" description="Security researcher & developer. Research, writeups, dev notes — and an interactive 3D tour.">
+  <div class="container home">
+    <!-- 00 · whoami -->
+    <section class="section hero">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <p class="sector-label"><span class="sector-num">00</span> · whoami</p>
+      <h1 class="hero-name glitch" data-text="nikola dzekic">nikola <span class="hero-accent">dzekic</span></h1>
+      <p class="hero-tagline">senior software developer &amp; security researcher<span class="cursor-blink"></span></p>
+      <p class="hero-bio">
+        I build software and occasionally break other people's. Day job is
+        engineering — nights and weekends drift toward vulnerability research,
+        bug bounty, and whatever rabbit hole I'm currently too deep in.
+      </p>
+      <dl class="facts">
+        <div class="fact"><dt>handle</dt><dd>ndzekic</dd></div>
+        <div class="fact"><dt>focus</dt><dd>engineering · web · appsec</dd></div>
+        <div class="fact"><dt>status</dt><dd><span class="status-dot"></span>online</dd></div>
+      </dl>
+    </section>
 
-        <div class="divider">──────────────────────</div>
-
-        <nav class="main-menu">
-          <p class="menu-prompt">SELECT MODE:</p>
-
-          <a href="/blog" class="menu-item">
-            <span class="menu-arrow">▶</span>
-            <span class="menu-key">[ B ]</span>
-            <span class="menu-label">BLOG</span>
-            <span class="menu-desc">dev notes &amp; writeups</span>
-          </a>
-
-          <a href="/research" class="menu-item">
-            <span class="menu-arrow">▶</span>
-            <span class="menu-key">[ R ]</span>
-            <span class="menu-label">RESEARCH</span>
-            <span class="menu-desc">CVEs, bounties &amp; techniques</span>
-          </a>
-        </nav>
-
-        <div class="divider">──────────────────────</div>
-
-        <footer class="landing-footer">
-          <a href="https://github.com/nikoladzekic" class="footer-link" target="_blank" rel="noopener">GITHUB</a>
-          <span class="footer-sep">//</span>
-          <a href="https://www.linkedin.com/in/nikola-dzekic/" class="footer-link" target="_blank" rel="noopener">LINKEDIN</a>
-        </footer>
+    <!-- 01 · latest -->
+    <section class="section">
+      <div class="section-head">
+        <p class="sector-label"><span class="sector-num">01</span> · latest</p>
+        <p class="section-count">{entries.length} recent</p>
       </div>
-    </div>
+
+      {entries.length === 0 ? (
+        <p class="empty">// nothing here yet</p>
+      ) : (
+        <ul class="rpg-menu latest-list">
+          {entries.map((entry, i) => (
+            <li>
+              <a href={entry.href}>
+                <span class="latest-index">{String(i + 1).padStart(2, '0')}</span>
+                <span class="latest-body">
+                  <span class="latest-meta">
+                    <span class:list={['latest-kind', `kind-${entry.kind}`]}>{entry.kind}</span>
+                    <span class="latest-date">{formatDate(entry.date)}</span>
+                  </span>
+                  <span class="latest-title">{entry.title}</span>
+                  {entry.tags.length > 0 && (
+                    <span class="latest-tags">
+                      {entry.tags.slice(0, 3).map((tag) => <span class="tag">{tag}</span>)}
+                    </span>
+                  )}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <nav class="section-links">
+        <a href="/blog" class="more-link">[B] all blog posts →</a>
+        <a href="/research" class="more-link">[R] all research →</a>
+      </nav>
+    </section>
+
+    <!-- 02 · links -->
+    <section class="section">
+      <p class="sector-label"><span class="sector-num">02</span> · signal</p>
+      <ul class="link-list">
+        <li><a href="https://github.com/nikoladzekic" target="_blank" rel="noopener">github</a></li>
+        <li><a href="https://www.linkedin.com/in/nikola-dzekic/" target="_blank" rel="noopener">linkedin</a></li>
+      </ul>
+
+      <a href="/tour" class="tour-teaser">
+        <span class="tour-pixel">▶ PRESS START</span>
+        <span class="tour-desc">walk through my room in 3D →</span>
+      </a>
+    </section>
   </div>
 </Base>
 
@@ -59,138 +126,332 @@ import Base from '../layouts/Base.astro';
 </script>
 
 <style>
-  .landing {
-    min-height: calc(100vh - 60px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-  }
-
-  .crt-frame {
-    border: 3px solid var(--green-dim);
-    box-shadow: var(--glow-green), inset 0 0 40px rgba(57,255,20,0.03);
-    max-width: 560px;
-    width: 100%;
-  }
-
-  .crt-inner {
-    padding: 3rem 2.5rem;
+  .home {
+    padding: 4rem 1.5rem 5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 4rem;
   }
 
-  .pre-title {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
-    color: var(--text-muted);
-    letter-spacing: 0.15em;
-    margin-bottom: 0.75rem;
+  /* ── entrance ── */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  .site-title {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-    text-shadow: var(--glow-green);
+  .section {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .tagline {
-    font-family: var(--font-mono);
-    font-size: 1.1rem;
+  .section:nth-child(2) { animation-delay: 0.12s; }
+  .section:nth-child(3) { animation-delay: 0.24s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section { animation: none; }
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  /* ── hero ── */
+  .hero {
+    position: relative;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: -2rem -3rem;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 90% at 25% 40%, black 0%, transparent 70%);
+    opacity: 0.45;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .hero-name {
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    letter-spacing: 0.02em;
+    margin: 0.5rem 0 0.25rem;
+    text-transform: lowercase;
+  }
+
+  .hero-accent {
+    color: var(--primary);
+  }
+
+  /* periodic RGB-split glitch, mirrors the custom cursor */
+  .glitch {
+    position: relative;
+    z-index: 0;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .glitch::before { color: var(--primary);  z-index: -1; }
+  .glitch::after  { color: var(--accent-2); z-index: -2; }
+
+  @keyframes glitch-a {
+    0%, 92%, 97.5%, 100% { opacity: 0; transform: none; }
+    93%   { opacity: 0.8; transform: translate(-5px, 2px); }
+    94%   { opacity: 0.8; transform: translate(4px, -2px) skewX(-6deg); }
+    95.5% { opacity: 0.8; transform: translate(-2px, 1px); }
+    97%   { opacity: 0.8; transform: translate(3px, -1px); }
+  }
+
+  @keyframes glitch-b {
+    0%, 92%, 97.5%, 100% { opacity: 0; transform: none; }
+    93%   { opacity: 0.7; transform: translate(5px, -2px); }
+    94.5% { opacity: 0.7; transform: translate(-4px, 2px) skewX(5deg); }
+    96%   { opacity: 0.7; transform: translate(2px, -1px); }
+    97%   { opacity: 0.7; transform: translate(-3px, 1px); }
+  }
+
+  .glitch::before { animation: glitch-a 7s steps(1) infinite; }
+  .glitch::after  { animation: glitch-b 7s steps(1) infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glitch::before,
+    .glitch::after { animation: none; }
+  }
+
+  .hero-tagline {
+    font-family: var(--font-meta);
+    font-size: 1rem;
     color: var(--text-dim);
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-bio {
+    max-width: 56ch;
+    color: var(--text-dim);
+    margin-bottom: 1.75rem;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2.5rem;
+  }
+
+  .fact dt {
+    font-family: var(--font-meta);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+  }
+
+  .fact dd {
+    font-size: 0.95rem;
+    color: var(--text);
     margin: 0;
   }
 
-  .divider {
-    font-family: var(--font-mono);
-    color: var(--border);
-    font-size: 1rem;
-    letter-spacing: 0.1em;
+  @keyframes dot-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(103, 232, 249, 0.5); }
+    70%  { box-shadow: 0 0 0 7px rgba(103, 232, 249, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(103, 232, 249, 0); }
   }
 
-  .main-menu {
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    margin-right: 0.4em;
+    animation: dot-pulse 2.4s ease-out infinite;
+  }
+
+  /* ── latest ── */
+  .section-count {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .latest-list {
+    margin-top: 1rem;
+  }
+
+  .latest-index {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    align-self: center;
+    transition: color 0.15s;
+  }
+
+  .rpg-menu a:hover .latest-index {
+    color: var(--accent);
+  }
+
+  .latest-body {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.35rem;
+    min-width: 0;
   }
 
-  .menu-prompt {
-    font-family: var(--font-pixel);
-    font-size: 0.45rem;
-    color: var(--text-muted);
-    letter-spacing: 0.12em;
-    margin-bottom: 0.75rem;
-  }
-
-  .menu-item {
-    display: grid;
-    grid-template-columns: 1rem 2.5rem 7rem 1fr;
+  .latest-meta {
+    display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.6rem 0.5rem;
-    text-decoration: none;
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 1.15rem;
-    border: 1px solid transparent;
-    transition: border-color 0.1s, background 0.1s;
   }
 
-  .menu-item:hover {
-    border-color: var(--green-dim);
-    background: rgba(57, 255, 20, 0.04);
+  .latest-kind {
+    font-family: var(--font-meta);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
-  .menu-arrow {
-    font-size: 0.6rem;
+  .kind-blog     { color: var(--accent-2); }
+  .kind-research { color: var(--primary); }
+  .kind-cve      { color: var(--danger); }
+  .kind-bounty   { color: var(--accent); }
+
+  .latest-date {
+    font-family: var(--font-meta);
+    font-size: 0.75rem;
     color: var(--text-muted);
   }
 
-  .menu-item:hover .menu-arrow {
-    color: var(--green);
+  .latest-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
   }
 
-  .menu-key {
-    font-family: var(--font-pixel);
-    font-size: 0.42rem;
-    color: var(--amber);
-    letter-spacing: 0.05em;
+  .rpg-menu a:hover .latest-title {
+    color: var(--primary);
   }
 
-  .menu-label {
+  .latest-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
+  }
+
+  .section-links {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .more-link {
+    font-family: var(--font-meta);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    transition: color 0.15s;
+  }
+
+  .more-link:hover {
+    color: var(--primary);
+  }
+
+  .empty {
+    font-family: var(--font-meta);
+    color: var(--text-muted);
+    padding: 1.5rem 0;
+  }
+
+  /* ── signal ── */
+  .link-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 2rem;
+    margin: 1rem 0 2rem;
+  }
+
+  .link-list a {
+    font-family: var(--font-meta);
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-bright);
+    padding-bottom: 0.1rem;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .link-list a:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .tour-teaser {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px dashed var(--border-bright);
+    padding: 0.85rem 1.25rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .tour-teaser:hover {
+    border-color: var(--accent);
+    background: var(--wash-primary);
+  }
+
+  @keyframes teaser-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+  .tour-pixel {
     font-family: var(--font-pixel);
     font-size: 0.5rem;
-    color: inherit;
-    letter-spacing: 0.05em;
-  }
-
-  .menu-desc {
-    color: var(--text-muted);
-    font-size: 1rem;
-  }
-
-  .landing-footer {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .footer-link {
-    font-family: var(--font-pixel);
-    font-size: 0.42rem;
-    color: var(--text-muted);
-    text-decoration: none;
+    color: var(--accent);
     letter-spacing: 0.1em;
-    transition: color 0.1s;
+    white-space: nowrap;
+    animation: teaser-blink 1.6s ease-in-out infinite;
   }
 
-  .footer-link:hover {
-    color: var(--green);
+  .tour-teaser:hover .tour-pixel {
+    animation: none;
+    color: var(--primary);
   }
 
-  .footer-sep {
-    color: var(--border);
-    font-family: var(--font-mono);
+  .tour-desc {
+    font-family: var(--font-meta);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 600px) {
+    .home {
+      padding: 2.5rem 1rem 4rem;
+      gap: 3rem;
+    }
+
+    .facts {
+      gap: 0.75rem 1.5rem;
+    }
+
+    .tour-teaser {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
   }
 </style>
