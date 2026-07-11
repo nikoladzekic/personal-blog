@@ -5,6 +5,15 @@ interface HUDProps {
   interactLabel?: string;
 }
 
+/** [key, action] rows for the corner legend panel */
+const LEGEND: [string, string][] = [
+  ['WASD', 'MOVE'],
+  ['MOUSE', 'LOOK'],
+  ['E', 'INTERACT'],
+  ['Q', 'CLOSE APP'],
+  ['ESC', 'MENU'],
+];
+
 export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
   return (
     <div
@@ -84,6 +93,60 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
           left: -2px;
           border-width: 0 0 3px 3px;
         }
+        .hud-legend {
+          position: absolute;
+          bottom: 1.5rem;
+          right: 1.5rem;
+          padding: 0.8rem 1rem;
+          border: 2px solid #e63950;
+          background: rgba(10, 10, 18, 0.78);
+        }
+        .hud-legend::before,
+        .hud-legend::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          border-color: #f2a33c;
+          border-style: solid;
+        }
+        .hud-legend::before {
+          top: -2px;
+          left: -2px;
+          border-width: 3px 0 0 3px;
+        }
+        .hud-legend::after {
+          bottom: -2px;
+          right: -2px;
+          border-width: 0 3px 3px 0;
+        }
+        .hud-legend .hud-br-tr,
+        .hud-legend .hud-br-bl {
+          width: 10px;
+          height: 10px;
+        }
+        .hud-legend-title {
+          color: #e63950;
+          font-size: 0.38rem;
+          letter-spacing: 0.12em;
+          margin: 0 0 0.65rem;
+        }
+        .hud-legend-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 1.2rem;
+          margin-top: 0.42rem;
+        }
+        .hud-legend-key {
+          color: #f2a33c;
+          font-size: 0.38rem;
+          letter-spacing: 0.1em;
+        }
+        .hud-legend-action {
+          color: #9a8d92;
+          font-size: 0.38rem;
+          letter-spacing: 0.1em;
+        }
       `}</style>
 
       {!locked && (
@@ -102,7 +165,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
               CLICK TO ENTER
             </p>
             <p style={{ color: '#9a8d92', fontSize: '0.45rem', letterSpacing: '0.08em', margin: 0 }}>
-              WASD TO MOVE · MOUSE TO LOOK · ESC TO EXIT
+              WASD MOVE · MOUSE LOOK · E INTERACT · ESC MENU
             </p>
           </div>
         </div>
@@ -124,17 +187,16 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
       )}
 
       {locked && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '1.5rem',
-            right: '1.5rem',
-            color: '#9a8d92',
-            fontSize: '0.4rem',
-            letterSpacing: '0.1em',
-          }}
-        >
-          ESC · EXIT TOUR
+        <div className="hud-legend">
+          <span className="hud-br-tr" aria-hidden />
+          <span className="hud-br-bl" aria-hidden />
+          <p className="hud-legend-title">CONTROLS</p>
+          {LEGEND.map(([key, action]) => (
+            <div key={key} className="hud-legend-row">
+              <span className="hud-legend-key">{key}</span>
+              <span className="hud-legend-action">{action}</span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -187,7 +249,7 @@ export function HUD({ nearTerminal, zone, locked, interactLabel }: HUDProps) {
             whiteSpace: 'nowrap',
           }}
         >
-          [E] OPEN {interactLabel ?? ''}
+          [E] {interactLabel ?? 'INTERACT'}
         </div>
       )}
     </div>

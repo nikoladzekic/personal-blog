@@ -24,6 +24,8 @@ export const COLLIDERS: ColliderBox[] = [
   { minX: 4.5, maxX: 5, minZ: -2.95, maxZ: -0.65 },
   // Chair
   { minX: 0.3, maxX: 1.0, minZ: -2.22, maxZ: -1.52 },
+  // Arcade cabinet (right wall, faces -X; GLB footprint ×0.72 around [4.45, 0, 1.4])
+  { minX: 3.8, maxX: 5, minZ: 1.0, maxZ: 1.8 },
 ];
 
 function clamp(v: number, min: number, max: number): number {

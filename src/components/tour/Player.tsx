@@ -106,8 +106,11 @@ export function Player({ onNearTerminal, terminalPositions }: PlayerProps) {
     forward.current.y = 0;
     if (forward.current.lengthSq() > 0) forward.current.normalize();
 
-    let nearest: string | null = null;
-    let nearestDist = Infinity;
+    // Among in-range targets, the one most in line with the view direction
+    // wins — aim-driven, so overlapping hotspots (books vs. the PC behind
+    // them) resolve to whatever the crosshair points at.
+    let target: string | null = null;
+    let bestDot = INTERACT_DOT;
 
     for (const term of terminalPositions) {
       const dx = term.position[0] - camera.position.x;
@@ -118,14 +121,14 @@ export function Player({ onNearTerminal, terminalPositions }: PlayerProps) {
         toTarget.current.set(dx, 0, dz);
         if (toTarget.current.lengthSq() > 0) toTarget.current.normalize();
         const dot = forward.current.dot(toTarget.current);
-        if (dot > INTERACT_DOT && dist < nearestDist) {
-          nearest = term.id;
-          nearestDist = dist;
+        if (dot > bestDot) {
+          target = term.id;
+          bestDot = dot;
         }
       }
     }
 
-    onNearTerminal(nearest);
+    onNearTerminal(target);
   });
 
   return (

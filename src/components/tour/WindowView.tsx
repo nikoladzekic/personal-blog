@@ -821,16 +821,134 @@ function HazeBand({
   );
 }
 
+const CAR_SPRITE_W = 48;
+const CAR_SPRITE_H = 24;
+const CAR_DAY_COLS = ['#c8c2b4', '#8f979e', '#5f6a72', '#a84038', '#d8d8d8', '#3a4148'];
+const CAR_NIGHT_HULLS = ['#12111c', '#171522', '#0e1018'];
+
 /**
- * Ground traffic on the baked avenue below the window (z ≈ -5.8..-4.2): small
- * car bodies by day, dark hulls with headlight/taillight pairs at night. One
- * lane per direction, right-hand traffic.
+ * Side-view pixel car baked to a canvas, drawn facing right (+x = nose);
+ * StreetTraffic mirrors it with a negative x-scale for the opposite lane.
+ * Night variant bakes lit head/taillights with glows into the sprite.
+ */
+function drawCarSprite(color: string, night: boolean) {
+  return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    ctx.clearRect(0, 0, w, h);
+
+    // ground shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(w / 2, 22, 20, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // lower body: tapered nose and tail
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(3, 18);
+    ctx.lineTo(2, 13);
+    ctx.lineTo(5, 11);
+    ctx.lineTo(43, 11);
+    ctx.lineTo(46, 13);
+    ctx.lineTo(45, 18);
+    ctx.closePath();
+    ctx.fill();
+
+    // cabin with slanted windshield and rear glass
+    ctx.beginPath();
+    ctx.moveTo(11, 11);
+    ctx.lineTo(15, 5);
+    ctx.lineTo(32, 5);
+    ctx.lineTo(37, 11);
+    ctx.closePath();
+    ctx.fill();
+
+    // roof highlight / side crease
+    ctx.fillStyle = shade(color, night ? 1.4 : 1.25);
+    ctx.fillRect(15, 5, 17, 1);
+    ctx.fillStyle = shade(color, 0.75);
+    ctx.fillRect(5, 15, 38, 1);
+
+    // windows, split by the b-pillar
+    ctx.fillStyle = night ? '#1f2838' : '#39515c';
+    ctx.beginPath();
+    ctx.moveTo(14, 10);
+    ctx.lineTo(17, 6);
+    ctx.lineTo(22, 6);
+    ctx.lineTo(22, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(24, 6);
+    ctx.lineTo(30, 6);
+    ctx.lineTo(33, 10);
+    ctx.lineTo(24, 10);
+    ctx.closePath();
+    ctx.fill();
+
+    if (night) {
+      // lit headlight + warm cone, lit taillight + red glow
+      let g = ctx.createRadialGradient(46, 13, 0, 46, 13, 9);
+      g.addColorStop(0, 'rgba(255,246,220,0.85)');
+      g.addColorStop(1, 'rgba(255,246,220,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(37, 4, 11, 18);
+      ctx.fillStyle = '#fff6dc';
+      ctx.fillRect(43, 12, 3, 3);
+
+      g = ctx.createRadialGradient(2, 13, 0, 2, 13, 6);
+      g.addColorStop(0, 'rgba(255,59,48,0.8)');
+      g.addColorStop(1, 'rgba(255,59,48,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 7, 8, 12);
+      ctx.fillStyle = '#ff3b30';
+      ctx.fillRect(2, 12, 2, 3);
+    } else {
+      // unlit lamps
+      ctx.fillStyle = '#ded6b6';
+      ctx.fillRect(44, 12, 2, 2);
+      ctx.fillStyle = '#8c2a24';
+      ctx.fillRect(2, 12, 2, 2);
+    }
+
+    // wheels over the body, with hubs
+    for (const wx of [12, 36]) {
+      ctx.fillStyle = '#14131a';
+      ctx.beginPath();
+      ctx.arc(wx, 18, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = night ? '#2c2c38' : '#4a4a55';
+      ctx.beginPath();
+      ctx.arc(wx, 18, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+}
+
+/**
+ * Ground traffic on the baked avenue below the window (z ≈ -5.8..-4.2):
+ * side-view pixel car sprites on camera-facing planes — coloured bodies by
+ * day, dark hulls with baked lit lights at night. One lane per direction,
+ * right-hand traffic; opposite lane mirrors via negative x-scale.
  */
 function StreetTraffic({ isDark }: { isDark: boolean }) {
   const group = useRef<THREE.Group>(null!);
+
+  const textures = useMemo(() => {
+    const cols = isDark ? CAR_NIGHT_HULLS : CAR_DAY_COLS;
+    return cols.map((c) => {
+      const tex = makeCityTexture(CAR_SPRITE_W, CAR_SPRITE_H, drawCarSprite(c, isDark));
+      // crisp pixel-car look instead of blurry upscaling
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      return tex;
+    });
+  }, [isDark]);
+
+  useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
+
   const cars = useMemo(() => {
     const rand = mulberry32(isDark ? 31 : 32);
-    const dayCols = ['#c8c2b4', '#8f979e', '#5f6a72', '#a84038', '#d8d8d8', '#3a4148'];
     return Array.from({ length: 8 }, () => {
       const dir = rand() < 0.5 ? 1 : -1;
       return {
@@ -838,10 +956,10 @@ function StreetTraffic({ isDark }: { isDark: boolean }) {
         z: dir > 0 ? -5.45 : -4.65,
         dir,
         speed: (1.4 + rand() * 1.8) * dir,
-        color: dayCols[Math.floor(rand() * dayCols.length)],
+        tex: Math.floor(rand() * textures.length),
       };
     });
-  }, [isDark]);
+  }, [isDark, textures]);
 
   useFrame((_, delta) => {
     group.current.children.forEach((car, i) => {
@@ -854,24 +972,19 @@ function StreetTraffic({ isDark }: { isDark: boolean }) {
   return (
     <group ref={group}>
       {cars.map((c, i) => (
-        <group key={i} position={[c.x, -2.93, c.z]}>
-          <mesh>
-            <boxGeometry args={[0.34, 0.11, 0.16]} />
-            <meshBasicMaterial color={isDark ? '#0d0c14' : c.color} />
+        // sprite ground line sits at the old box's bottom (y ≈ -2.985)
+        <group key={i} position={[c.x, -2.877, c.z]}>
+          <mesh scale={[c.dir, 1, 1]}>
+            <planeGeometry args={[0.44, 0.22]} />
+            <meshBasicMaterial
+              map={textures[c.tex]}
+              transparent
+              alphaTest={0.05}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+              fog={!isDark}
+            />
           </mesh>
-          {isDark && (
-            <>
-              {/* headlights ahead, taillights behind */}
-              <mesh position={[0.18 * c.dir, -0.01, 0]} rotation={[0, (Math.PI / 2) * c.dir, 0]}>
-                <planeGeometry args={[0.14, 0.05]} />
-                <meshBasicMaterial color="#fff6dc" fog={false} />
-              </mesh>
-              <mesh position={[-0.18 * c.dir, -0.01, 0]} rotation={[0, (-Math.PI / 2) * c.dir, 0]}>
-                <planeGeometry args={[0.14, 0.05]} />
-                <meshBasicMaterial color="#ff3b30" fog={false} />
-              </mesh>
-            </>
-          )}
         </group>
       ))}
     </group>

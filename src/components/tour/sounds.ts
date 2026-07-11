@@ -168,6 +168,35 @@ function getFootstepBuffer(ctx: AudioContext): AudioBuffer {
   });
 }
 
+/**
+ * One-shot chiptune blip routed through the listener's master gain so the
+ * global mute toggle applies. Used by the NETRUNNER game overlay.
+ */
+export function playBlip(
+  freq = 440,
+  duration = 0.08,
+  type: OscillatorType = 'square',
+  volume = 0.05,
+  slideTo?: number
+) {
+  const l = getListener();
+  const ctx = l.context;
+  if (ctx.state !== 'running') return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  if (slideTo) {
+    osc.frequency.exponentialRampToValueAtTime(slideTo, ctx.currentTime + duration);
+  }
+  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(l.getInput());
+  osc.start();
+  osc.stop(ctx.currentTime + duration);
+}
+
 let footstepAudio: THREE.Audio | null = null;
 
 export function playFootstep() {

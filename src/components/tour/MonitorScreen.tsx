@@ -1,31 +1,20 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { MONO, PIXEL, makeCrtOverlay } from './netrunnerShared';
 
 /**
- * Retro boot sequence rendered to a canvas texture: BIOS POST → DOS prompt →
- * 8-bit game title/loading screen → high scores, looping. Deterministic in
- * loop time so it cycles seamlessly. Redraws are throttled to ~20fps.
+ * Retro boot sequence rendered to a canvas texture: BIOS POST → OS loader →
+ * a minimal desktop with the diary/ and research/ folders that the VM
+ * simulator overlay opens (walk up and press E). Boot plays once, then the
+ * desktop persists; redraws are throttled to ~20fps during boot and drop to
+ * 4fps once the desktop settles.
  */
 
 const W = 1024;
 const H = 432;
-const LOOP = 38;
 const FPS = 20;
-
-const PIXEL = "'Press Start 2P', monospace";
-const MONO = "'Share Tech Mono', monospace";
-
-/* ---------------------------------- timeline ----------------------------------
- * 0.0–1.0    black, blinking cursor
- * 1.0–7.5    BIOS POST (memory count 2.2→4.4)
- * 7.5–8.6    blank → "Starting MS-DOS..."
- * 8.6–13.0   DOS prompt typing, loader messages
- * 13.0–13.5  video mode switch flicker
- * 13.5–27.5  title screen + loading bar
- * 27.5–36.0  title + high scores + PRESS ENTER
- * 36.0–38.0  power-fade to black
- * ------------------------------------------------------------------------------ */
+const DESKTOP_AT = 12.4;
 
 interface BiosLine {
   at: number;
@@ -70,95 +59,13 @@ interface DosLine {
 }
 
 const DOS_LINES: DosLine[] = [
-  { at: 7.9, text: 'Starting MS-DOS...' },
-  { at: 8.8, prompt: 'C:\\>', typed: 'cd netrun', cps: 11 },
-  { at: 10.0, prompt: 'C:\\NETRUN>', typed: 'netrun', cps: 10 },
-  { at: 11.1, text: 'NETRUNNER loader v1.2' },
-  { at: 11.4, text: 'VGA 320x200 256-color mode ....... OK' },
-  { at: 11.8, text: 'Sound Blaster 16 at A220 I5 D1 ... OK' },
-  { at: 12.2, text: 'EMS memory: 4096 KB available' },
-  { at: 12.6, text: 'Loading NETRUN.DAT ...' },
+  { at: 7.9, text: 'DzekicOS boot loader v2.1' },
+  { at: 8.4, text: 'mounting /dev/hda1 on / ............. ok' },
+  { at: 8.8, text: 'mounting /dev/hda2 on /home ......... ok' },
+  { at: 9.2, prompt: 'login: ', typed: 'ndz', cps: 6 },
+  { at: 10.2, text: 'password: ********' },
+  { at: 11.0, prompt: '$ ', typed: 'startx', cps: 9 },
 ];
-
-/* Loading-bar progress waypoints (time, fraction) — stalls included on purpose */
-const LOAD_STEPS: [number, number][] = [
-  [14.5, 0],
-  [16.5, 0.18],
-  [17.4, 0.18],
-  [19.5, 0.42],
-  [20.6, 0.46],
-  [23.0, 0.71],
-  [24.0, 0.71],
-  [26.5, 1.0],
-];
-
-function loadProgress(t: number): number {
-  if (t <= LOAD_STEPS[0][0]) return 0;
-  for (let i = 1; i < LOAD_STEPS.length; i++) {
-    const [t1, p1] = LOAD_STEPS[i];
-    const [t0, p0] = LOAD_STEPS[i - 1];
-    if (t < t1) return p0 + ((t - t0) / (t1 - t0)) * (p1 - p0);
-  }
-  return 1;
-}
-
-/* 16x14 skull sprite (0 transparent, 1 bone, 2 shadow, 3 eye glow) */
-// prettier-ignore
-const SKULL: number[][] = [
-  [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,2,3,3,2,1,1,1,1,2,3,3,2,1,1],
-  [1,1,2,3,3,2,1,1,1,1,2,3,3,2,1,1],
-  [1,1,1,2,2,1,1,2,2,1,1,2,2,1,1,1],
-  [0,1,1,1,1,1,2,2,2,2,1,1,1,1,1,0],
-  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-  [0,0,1,1,2,1,2,1,1,2,1,2,1,1,0,0],
-  [0,0,0,1,2,1,2,1,1,2,1,2,1,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,0],
-];
-
-const HIGH_SCORES: [string, string, string][] = [
-  ['1', 'NDZ', '999999'],
-  ['2', 'ACE', '421337'],
-  ['3', 'R4T', '080486'],
-  ['4', 'GH0', '064000'],
-  ['5', 'SYS', '032768'],
-];
-
-/* Deterministic starfield */
-const STARS = Array.from({ length: 70 }, (_, i) => {
-  const r1 = Math.sin(i * 127.1) * 43758.5453;
-  const r2 = Math.sin(i * 311.7) * 12543.853;
-  const r3 = Math.sin(i * 74.7) * 9631.41;
-  return {
-    x: (r1 - Math.floor(r1)) * W,
-    y: (r2 - Math.floor(r2)) * H,
-    phase: (r3 - Math.floor(r3)) * Math.PI * 2,
-    speed: 1.5 + (r3 - Math.floor(r3)) * 3,
-  };
-});
-
-function drawSprite(
-  ctx: CanvasRenderingContext2D,
-  sprite: number[][],
-  x: number,
-  y: number,
-  px: number,
-  palette: Record<number, string>
-) {
-  for (let row = 0; row < sprite.length; row++) {
-    for (let col = 0; col < sprite[row].length; col++) {
-      const v = sprite[row][col];
-      if (!v) continue;
-      ctx.fillStyle = palette[v];
-      ctx.fillRect(x + col * px, y + row * px, px, px);
-    }
-  }
-}
 
 function drawBios(ctx: CanvasRenderingContext2D, t: number) {
   ctx.fillStyle = '#0a0a0a';
@@ -201,7 +108,7 @@ function drawBios(ctx: CanvasRenderingContext2D, t: number) {
   ctx.fillText('06/12/92-UMC-491-2A4X5D21C-00', 52, H - 30);
 }
 
-function drawDos(ctx: CanvasRenderingContext2D, t: number) {
+function drawLogin(ctx: CanvasRenderingContext2D, t: number) {
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, W, H);
   ctx.font = `22px ${MONO}`;
@@ -209,164 +116,114 @@ function drawDos(ctx: CanvasRenderingContext2D, t: number) {
   ctx.fillStyle = '#c8c8c8';
 
   let y = 18;
-  let lastLineEnd = 0;
   for (const line of DOS_LINES) {
     if (t < line.at) break;
     if (line.typed) {
       const cps = line.cps ?? 10;
       const shown = line.typed.slice(0, Math.floor((t - line.at) * cps));
       ctx.fillText(`${line.prompt}${shown}`, 52, y);
-      lastLineEnd = line.at + line.typed.length / cps;
     } else {
       ctx.fillText(line.text ?? '', 52, y);
-      lastLineEnd = line.at;
     }
     y += 27;
   }
 
-  // cursor at end of current line
   if (Math.floor(t * 2.4) % 2 === 0) {
     ctx.fillRect(52, y + 4, 11, 18);
   }
-  void lastLineEnd;
 }
 
-function drawTitle(ctx: CanvasRenderingContext2D, t: number) {
-  // VGA dark blue backdrop
-  ctx.fillStyle = '#04062a';
+/* --------------------------------- desktop --------------------------------- */
+
+function drawFolder(ctx: CanvasRenderingContext2D, x: number, y: number, label: string) {
+  // folder body with retro shading
+  ctx.fillStyle = '#caa23c';
+  ctx.fillRect(x, y + 10, 88, 60);
+  ctx.fillStyle = '#e8c451';
+  ctx.fillRect(x, y, 40, 14);
+  ctx.fillRect(x, y + 6, 88, 10);
+  ctx.fillStyle = '#f8dd7c';
+  ctx.fillRect(x, y + 10, 88, 5);
+  ctx.fillStyle = '#8a6a1e';
+  ctx.fillRect(x, y + 66, 88, 4);
+  ctx.fillRect(x + 84, y + 10, 4, 60);
+
+  ctx.font = `17px ${MONO}`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#0e1210';
+  ctx.fillText(label, x + 45, y + 84);
+  ctx.fillStyle = '#d8e8dc';
+  ctx.fillText(label, x + 44, y + 83);
+  ctx.textAlign = 'left';
+}
+
+function drawDesktop(ctx: CanvasRenderingContext2D, t: number) {
+  // wallpaper: deep teal gradient + subtle grid
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0c2a26');
+  bg.addColorStop(1, '#071512');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
-
-  // starfield
-  for (const s of STARS) {
-    const tw = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
-    ctx.fillStyle = `rgba(180,200,255,${(0.55 * tw).toFixed(2)})`;
-    const x = (s.x + t * 4) % W;
-    ctx.fillRect(x, s.y, 2, 2);
+  ctx.strokeStyle = 'rgba(80,180,150,0.07)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 64) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
   }
 
-  // chunky double border
-  ctx.strokeStyle = '#3a44cc';
-  ctx.lineWidth = 8;
-  ctx.strokeRect(8, 8, W - 16, H - 16);
-  ctx.strokeStyle = '#7a86ff';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(17, 17, W - 34, H - 34);
-  // corner blocks
-  ctx.fillStyle = '#7a86ff';
-  for (const [cx, cy] of [
-    [8, 8],
-    [W - 28, 8],
-    [8, H - 28],
-    [W - 28, H - 28],
-  ]) {
-    ctx.fillRect(cx, cy, 20, 20);
-    ctx.fillStyle = '#3a44cc';
-    ctx.fillRect(cx + 5, cy + 5, 10, 10);
-    ctx.fillStyle = '#7a86ff';
-  }
-
-  // skulls flanking the title
-  const bob = Math.sin(t * 1.8) * 4;
-  const skullPal = { 1: '#cdd2e8', 2: '#5a608a', 3: '#39ff14' };
-  drawSprite(ctx, SKULL, 96, 64 + bob, 7, skullPal);
-  drawSprite(ctx, SKULL, W - 96 - 16 * 7, 64 - bob, 7, skullPal);
-
-  // title with classic 3-layer arcade lettering, laid out by glyph ink bounds
-  // so padded glyphs (like T) don't leave uneven gaps
-  const TITLE = 'NETRUNNER';
-  const GAP = 6;
+  // centered logo watermark
+  ctx.font = `26px ${PIXEL}`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(90,190,160,0.16)';
+  ctx.fillText('DzekicOS', W / 2, 160);
+  ctx.font = `13px ${MONO}`;
+  ctx.fillStyle = 'rgba(90,190,160,0.28)';
+  ctx.fillText('v2.1 — property of ndz', W / 2, 200);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.font = `64px ${PIXEL}`;
-  const metrics = [...TITLE].map((ch) => ctx.measureText(ch));
-  const inkW = metrics.map((m) => m.actualBoundingBoxRight + m.actualBoundingBoxLeft);
-  const total = inkW.reduce((a, b) => a + b, 0) + GAP * (TITLE.length - 1);
-  const drawTitle = (ox: number, oy: number, fill: string | CanvasGradient) => {
-    ctx.fillStyle = fill;
-    let x = W / 2 - total / 2;
-    for (let i = 0; i < TITLE.length; i++) {
-      ctx.fillText(TITLE[i], x + metrics[i].actualBoundingBoxLeft + ox, 76 + oy);
-      x += inkW[i] + GAP;
-    }
-  };
-  const grad = ctx.createLinearGradient(0, 76, 0, 76 + 64);
-  grad.addColorStop(0, '#ffe14a');
-  grad.addColorStop(0.55, '#ffb01e');
-  grad.addColorStop(1, '#ff6a1a');
-  drawTitle(6, 6, '#1a0b4a');
-  drawTitle(0, 0, grad);
-  ctx.textAlign = 'center';
 
-  ctx.font = `18px ${PIXEL}`;
-  ctx.fillStyle = '#62e8ff';
-  ctx.fillText('SHADOW OF THE KERNEL', W / 2, 168);
+  // desktop icons
+  drawFolder(ctx, 60, 48, 'diary');
+  drawFolder(ctx, 60, 190, 'research');
 
-  ctx.font = `13px ${PIXEL}`;
-  ctx.fillStyle = '#8a8aa8';
-  ctx.fillText('(C) 1992 DZEKIC SOFT', W / 2, H - 40);
-  ctx.textAlign = 'left';
-}
+  // hint card, bottom right
+  ctx.fillStyle = 'rgba(10,20,16,0.75)';
+  ctx.fillRect(W - 360, H - 130, 300, 62);
+  ctx.strokeStyle = '#2f6a58';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(W - 360, H - 130, 300, 62);
+  ctx.font = `18px ${MONO}`;
+  ctx.fillStyle = '#7ad0b0';
+  ctx.fillText('PRESS [E] AT THE DESK', W - 340, H - 116);
+  ctx.fillText('TO USE THIS MACHINE', W - 340, H - 92);
 
-function drawLoadingBar(ctx: CanvasRenderingContext2D, t: number) {
-  const p = loadProgress(t);
-  const barW = 420;
-  const barH = 26;
-  const bx = (W - barW) / 2;
-  const by = 268;
+  // taskbar
+  ctx.fillStyle = '#101a16';
+  ctx.fillRect(0, H - 44, W, 44);
+  ctx.fillStyle = '#1c3a2e';
+  ctx.fillRect(0, H - 44, W, 3);
+  ctx.fillStyle = '#2f6a58';
+  ctx.fillRect(10, H - 36, 96, 28);
+  ctx.font = `18px ${MONO}`;
+  ctx.fillStyle = '#dff5ea';
+  ctx.fillText('start', 30, H - 32);
 
-  ctx.textAlign = 'center';
-  ctx.font = `16px ${PIXEL}`;
-  ctx.fillStyle = '#e8e8f8';
-  ctx.fillText('LOADING', W / 2, by - 34);
-
-  ctx.strokeStyle = '#e8e8f8';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(bx, by, barW, barH);
-
-  // segmented fill
-  const segW = 14;
-  const gap = 4;
-  const inner = barW - 8;
-  const segs = Math.floor(inner / (segW + gap));
-  const lit = Math.floor(segs * p);
-  for (let i = 0; i < lit; i++) {
-    ctx.fillStyle = i === lit - 1 && p < 1 ? '#ff5ad2' : '#b03ae8';
-    ctx.fillRect(bx + 4 + i * (segW + gap) + 2, by + 5, segW, barH - 10);
-  }
-
-  // disk activity line
-  const stalled = p > 0 && p < 1 && Math.abs(loadProgress(t + 0.12) - p) < 0.0001;
-  ctx.font = `11px ${PIXEL}`;
-  if (p < 1) {
-    if (Math.floor(t * 3) % 2 === 0) {
-      ctx.fillStyle = stalled ? '#ffb01e' : '#62e8ff';
-      ctx.fillText(stalled ? 'SEEK DISK A: ...' : 'READING DISK A: ...', W / 2, by + barH + 18);
-    }
-    // drive LED
-    ctx.fillStyle = !stalled && Math.floor(t * 9) % 2 === 0 ? '#ff3030' : '#401010';
-    ctx.fillRect(bx + barW + 18, by + 8, 10, 10);
-  }
-  ctx.textAlign = 'left';
-}
-
-function drawHighScores(ctx: CanvasRenderingContext2D, t: number) {
-  ctx.textAlign = 'center';
-  ctx.font = `14px ${PIXEL}`;
-  ctx.fillStyle = '#ff5ad2';
-  ctx.fillText('TOP NETRUNNERS', W / 2, 212);
-
-  const rowColors = ['#ffe14a', '#ffb01e', '#62e8ff', '#7aff7a', '#c8c8e8'];
-  ctx.font = `12px ${PIXEL}`;
-  HIGH_SCORES.forEach(([rank, name, score], i) => {
-    ctx.fillStyle = rowColors[i];
-    ctx.fillText(`${rank}  ${name} ...... ${score}`, W / 2, 240 + i * 23);
-  });
-
-  if (Math.floor(t * 1.4) % 2 === 0) {
-    ctx.font = `15px ${PIXEL}`;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('PRESS ENTER', W / 2, H - 64);
-  }
+  // live clock
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const colon = Math.floor(t * 1.2) % 2 === 0 ? ':' : ' ';
+  ctx.fillStyle = '#9adfc4';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${hh}${colon}${mm}`, W - 24, H - 32);
   ctx.textAlign = 'left';
 }
 
@@ -380,65 +237,15 @@ function drawFrame(ctx: CanvasRenderingContext2D, t: number) {
     }
   } else if (t < 7.5) {
     drawBios(ctx, t);
-  } else if (t < 13.0) {
-    drawDos(ctx, t);
-  } else if (t < 13.5) {
+  } else if (t < 12.0) {
+    drawLogin(ctx, t);
+  } else if (t < DESKTOP_AT) {
     // video mode switch: black with one bright flash frame
-    ctx.fillStyle = t > 13.05 && t < 13.12 ? '#aab4ff' : '#000000';
+    ctx.fillStyle = t > 12.05 && t < 12.12 ? '#aab4ff' : '#000000';
     ctx.fillRect(0, 0, W, H);
-  } else if (t < 27.5) {
-    drawTitle(ctx, t);
-    drawLoadingBar(ctx, t);
-  } else if (t < 36.0) {
-    drawTitle(ctx, t);
-    drawHighScores(ctx, t);
   } else {
-    // power down: collapse to a fading horizontal line
-    const k = Math.min(1, (t - 36.0) / 0.5);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, W, H);
-    if (k < 1) {
-      ctx.fillStyle = `rgba(220,230,255,${(1 - k).toFixed(2)})`;
-      const lh = Math.max(2, (1 - k) * 10);
-      ctx.fillRect(W * 0.5 * k * 0.8, H / 2 - lh / 2, W * (1 - k * 0.8), lh);
-    }
+    drawDesktop(ctx, t);
   }
-}
-
-/* Static CRT overlay: scanlines, aperture columns, vignette, dark curved corners */
-function makeCrtOverlay(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = W;
-  c.height = H;
-  const ctx = c.getContext('2d')!;
-
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
-  ctx.fillStyle = 'rgba(0,0,0,0.07)';
-  for (let x = 0; x < W; x += 3) ctx.fillRect(x, 0, 1, H);
-
-  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.62);
-  vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,0.38)');
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, W, H);
-
-  // curved CRT corners
-  const r = 30;
-  ctx.fillStyle = 'rgba(0,0,0,0.92)';
-  for (const [cx, cy] of [
-    [0, 0],
-    [W, 0],
-    [0, H],
-    [W, H],
-  ]) {
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.rect(cx - r, cy - r, r * 2, r * 2);
-    ctx.fill('evenodd');
-  }
-  return c;
 }
 
 /**
@@ -462,9 +269,9 @@ export function MonitorScreen({ mesh }: { mesh: THREE.Mesh }) {
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
-    // Dev helper: ?boot=12 fast-forwards the boot loop by 12 seconds
+    // Dev helper: ?boot=12 fast-forwards the boot sequence by 12 seconds
     const bootOffset = Number(new URLSearchParams(window.location.search).get('boot')) || 0;
-    return { ctx, texture, material, overlay: makeCrtOverlay(), bootOffset };
+    return { ctx, texture, material, overlay: makeCrtOverlay(W, H), bootOffset };
   }, []);
 
   useEffect(() => {
@@ -482,9 +289,11 @@ export function MonitorScreen({ mesh }: { mesh: THREE.Mesh }) {
 
   useFrame(({ clock }) => {
     const now = clock.getElapsedTime();
-    if (now - lastDraw.current < 1 / FPS) return;
+    const t = now + bootOffset;
+    // desktop is near-static: 4fps keeps the clock/cursor alive for cheap
+    const fps = t > DESKTOP_AT + 1 ? 4 : FPS;
+    if (now - lastDraw.current < 1 / fps) return;
     lastDraw.current = now;
-    const t = (now + bootOffset) % LOOP;
 
     drawFrame(ctx, t);
 
@@ -496,13 +305,6 @@ export function MonitorScreen({ mesh }: { mesh: THREE.Mesh }) {
     band.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = band;
     ctx.fillRect(0, Math.max(0, bandY), W, 110);
-
-    // rare horizontal sync tear
-    const tearPhase = now % 11;
-    if (tearPhase < 0.14) {
-      const ty = Math.floor((Math.sin(now * 3.7) * 0.5 + 0.5) * (H - 40));
-      ctx.drawImage(ctx.canvas, 0, ty, W, 22, 7, ty, W, 22);
-    }
 
     ctx.drawImage(overlay, 0, 0);
     texture.needsUpdate = true;

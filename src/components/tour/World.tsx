@@ -3,53 +3,47 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
 import { Room, DESK_TOP_Y, DESK_Z } from './Room';
 import { Player } from './Player';
-import { Book } from './Book';
 import { HUD } from './HUD';
 import { Effects } from './Effects';
-import { PostModal, type PostEntry } from './PostModal';
+import type { PostEntry } from './PostModal';
+import { ArcadeCabinet } from './ArcadeCabinet';
+import { NetrunnerGame } from './NetrunnerGame';
+import { VMDesktop } from './VMDesktop';
 import { LoadingScreen } from './LoadingScreen';
 import { SceneErrorBoundary } from './SceneErrorBoundary';
 import { SpatialAudio } from './SpatialAudio';
 import { setMuted } from './sounds';
-import type { BookTextureVariant } from './usePixelTexture';
 
 interface WorldProps {
   blogPosts: PostEntry[];
   researchPosts: PostEntry[];
 }
 
-const BOOK_Y = DESK_TOP_Y + 0.04;
-const BOOK_Z = DESK_Z + 0.18;
-
-const BOOKS: {
-  id: string;
-  position: [number, number, number];
-  label: string;
-  variant: BookTextureVariant;
-}[] = [
-  {
-    id: 'blog',
-    position: [-1, BOOK_Y, BOOK_Z],
-    label: 'PERSONAL DIARY',
-    variant: 'diary',
-  },
-  {
-    id: 'research',
-    position: [0.52, BOOK_Y, BOOK_Z],
-    label: 'RESEARCH LOG',
-    variant: 'research',
-  },
+/** Everything the player can press E on: the arcade cabinet on the right
+ *  wall and the desk PC (opens the VM simulator, which holds the diary and
+ *  research log as folders). */
+const INTERACTABLES: { id: string; position: [number, number, number] }[] = [
+  { id: 'arcade', position: [4.2, 1.2, 1.4] as [number, number, number] },
+  { id: 'pc', position: [0, DESK_TOP_Y + 0.5, DESK_Z] as [number, number, number] },
 ];
 
+type ModalSection = 'arcade' | 'pc';
+
 const ZONE_LABELS: Record<string, string> = {
-  blog: 'PERSONAL DIARY',
-  research: 'RESEARCH LOG',
+  arcade: 'ARCADE',
+  pc: 'WORKSTATION',
+};
+
+/** HUD prompt per interactable: "[E] {action}" */
+const INTERACT_ACTIONS: Record<string, string> = {
+  arcade: 'PLAY NETRUNNER',
+  pc: 'USE WORKSTATION',
 };
 
 /**
- * Nothing that casts a shadow ever moves (the player has no body, books only
- * pulse emissive), so re-rendering the shadow map every frame is pure waste.
- * Let it settle for a few frames after mount/mode-switch, then freeze it.
+ * Nothing that casts a shadow ever moves (the player has no body), so
+ * re-rendering the shadow map every frame is pure waste. Let it settle for a
+ * few frames after mount/mode-switch, then freeze it.
  */
 function FrozenShadows({ isDark }: { isDark: boolean }) {
   const gl = useThree((s) => s.gl);
@@ -70,30 +64,18 @@ function FrozenShadows({ isDark }: { isDark: boolean }) {
 }
 
 function WorldScene({
-  onNearBook,
-  nearBook,
+  onNearTarget,
   isDark,
 }: {
-  onNearBook: (id: string | null) => void;
-  nearBook: string | null;
+  onNearTarget: (id: string | null) => void;
   isDark: boolean;
 }) {
   return (
     <>
       <Environment preset="apartment" environmentIntensity={isDark ? 0.15 : 0.6} />
       <Room isDark={isDark} />
-      {BOOKS.map((book) => (
-        <Book
-          key={book.id}
-          id={book.id}
-          position={book.position}
-          label={book.label}
-          variant={book.variant}
-          isNear={nearBook === book.id}
-          isDark={isDark}
-        />
-      ))}
-      <Player onNearTerminal={onNearBook} terminalPositions={BOOKS} />
+      <ArcadeCabinet position={[4.45, 0, 1.4]} rotation={[0, Math.PI, 0]} isDark={isDark} />
+      <Player onNearTerminal={onNearTarget} terminalPositions={INTERACTABLES} />
       <SpatialAudio />
       <FrozenShadows isDark={isDark} />
       <Effects isDark={isDark} />
@@ -102,9 +84,8 @@ function WorldScene({
 }
 
 export function World({ blogPosts, researchPosts }: WorldProps) {
-  const [nearBook, setNearBook] = useState<string | null>(null);
-  const [modalSection, setModalSection] = useState<'blog' | 'research' | null>(null);
-  const [selectedPost, setSelectedPost] = useState<PostEntry | null>(null);
+  const [nearTarget, setNearTarget] = useState<string | null>(null);
+  const [modalSection, setModalSection] = useState<ModalSection | null>(null);
   const [locked, setLocked] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
@@ -116,20 +97,20 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
     });
   }, []);
 
-  const handleNearBook = useCallback((id: string | null) => {
-    setNearBook(id);
+  const handleNearTarget = useCallback((id: string | null) => {
+    setNearTarget(id);
   }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.code === 'KeyE' && nearBook && modalSection === null) {
-        setModalSection(nearBook as 'blog' | 'research');
+      if (e.code === 'KeyE' && nearTarget && modalSection === null) {
+        setModalSection(nearTarget as ModalSection);
         document.exitPointerLock?.();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [nearBook, modalSection]);
+  }, [nearTarget, modalSection]);
 
   useEffect(() => {
     const handler = () => setLocked(!!document.pointerLockElement);
@@ -139,19 +120,11 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
 
   const closeModal = useCallback(() => {
     setModalSection(null);
-    setSelectedPost(null);
   }, []);
 
-  const openFull = useCallback(
-    (slug: string) => {
-      const section = modalSection;
-      window.location.href = `/${section}/${slug}`;
-    },
-    [modalSection]
-  );
-
-  const posts = modalSection === 'blog' ? blogPosts : researchPosts;
-  const currentZone = nearBook ? ZONE_LABELS[nearBook] ?? nearBook.toUpperCase() : 'IT ROOM';
+  const currentZone = nearTarget
+    ? ZONE_LABELS[nearTarget] ?? nearTarget.toUpperCase()
+    : 'IT ROOM';
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
@@ -244,7 +217,7 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
           <color attach="background" args={[isDark ? '#050510' : '#8fc7f2']} />
           <fog attach="fog" args={[isDark ? '#08081a' : '#c4ddf1', 14, 26]} />
           <Suspense fallback={null}>
-            <WorldScene onNearBook={handleNearBook} nearBook={nearBook} isDark={isDark} />
+            <WorldScene onNearTarget={handleNearTarget} isDark={isDark} />
           </Suspense>
         </Canvas>
       </SceneErrorBoundary>
@@ -252,21 +225,16 @@ export function World({ blogPosts, researchPosts }: WorldProps) {
       <LoadingScreen />
 
       <HUD
-        nearTerminal={modalSection === null ? nearBook : null}
+        nearTerminal={modalSection === null ? nearTarget : null}
         zone={currentZone}
         locked={locked}
-        interactLabel={nearBook ? ZONE_LABELS[nearBook] : undefined}
+        interactLabel={nearTarget ? INTERACT_ACTIONS[nearTarget] : undefined}
       />
 
-      {modalSection && (
-        <PostModal
-          section={modalSection}
-          posts={posts}
-          selected={selectedPost}
-          onSelect={setSelectedPost}
-          onClose={closeModal}
-          onOpenFull={openFull}
-        />
+      {modalSection === 'arcade' && <NetrunnerGame onClose={closeModal} />}
+
+      {modalSection === 'pc' && (
+        <VMDesktop blogPosts={blogPosts} researchPosts={researchPosts} onClose={closeModal} />
       )}
     </div>
   );
