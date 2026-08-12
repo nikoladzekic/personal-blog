@@ -197,6 +197,119 @@ export function playBlip(
   osc.stop(ctx.currentTime + duration);
 }
 
+/* ------------------------------- game music -------------------------------- */
+
+export interface GameMusic {
+  start(): void;
+  stop(): void;
+  /** 0..1 — maps to tempo (higher game speed → faster riff). */
+  setIntensity(v: number): void;
+  /** Flatline sting: kill the loop and slur a detuned power-down. */
+  death(): void;
+}
+
+const A1 = 55; // Hz
+const semi = (n: number) => A1 * Math.pow(2, n / 12);
+
+// 16-step (sixteenth-note) patterns in A-minor pentatonic; null = rest.
+// prettier-ignore
+const BASS_PAT: (number | null)[] = [ 0, null, 0, 12, 3, null, 3, null, 5, null, 5, 12, 3, null, 7, null];
+// prettier-ignore
+const ARP_PAT:  (number | null)[] = [24, 19, 15, 19, 27, 22, 19, 22, 29, 24, 19, 24, 27, 22, 19, 15];
+
+/**
+ * Lookahead sequencer for the NETRUNNER overlay. Schedules bass + arp voices a
+ * little ahead of the clock (the standard Web Audio pattern) so tempo can be
+ * nudged every frame without glitching. All voices route through the listener's
+ * master gain, so the tour's mute toggle applies.
+ */
+export function createGameMusic(): GameMusic {
+  const l = getListener();
+  const ctx = l.context as AudioContext;
+  const out = l.getInput();
+
+  let timer: number | null = null;
+  let step = 0;
+  let nextTime = 0;
+  let intensity = 0;
+  let dead = false;
+
+  const voice = (
+    freq: number,
+    time: number,
+    dur: number,
+    type: OscillatorType,
+    vol: number
+  ) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(vol, time + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    osc.connect(gain);
+    gain.connect(out);
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  };
+
+  const stepDur = () => 60 / (100 + intensity * 76) / 4; // sixteenths, 100–176 BPM
+
+  const schedule = () => {
+    if (dead) return;
+    while (nextTime < ctx.currentTime + 0.12) {
+      const dur = stepDur();
+      const s = step % 16;
+      const b = BASS_PAT[s];
+      if (b != null) voice(semi(b), nextTime, dur * 1.7, 'square', 0.05);
+      const a = ARP_PAT[s];
+      if (a != null) voice(semi(a), nextTime, dur * 0.85, 'square', 0.022);
+      // driving off-beat hat
+      if (s % 2 === 1) voice(semi(48), nextTime, dur * 0.3, 'triangle', 0.012);
+      nextTime += dur;
+      step++;
+    }
+  };
+
+  return {
+    start() {
+      if (timer != null) return;
+      if (ctx.state === 'suspended') void ctx.resume();
+      dead = false;
+      step = 0;
+      nextTime = ctx.currentTime + 0.06;
+      timer = window.setInterval(schedule, 25);
+    },
+    stop() {
+      if (timer != null) {
+        clearInterval(timer);
+        timer = null;
+      }
+      dead = true;
+    },
+    setIntensity(v: number) {
+      intensity = Math.max(0, Math.min(1, v));
+    },
+    death() {
+      dead = true;
+      if (ctx.state !== 'running') return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(semi(7), now);
+      osc.frequency.exponentialRampToValueAtTime(semi(-17), now + 0.85);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+      osc.connect(gain);
+      gain.connect(out);
+      osc.start(now);
+      osc.stop(now + 0.95);
+    },
+  };
+}
+
 let footstepAudio: THREE.Audio | null = null;
 
 export function playFootstep() {

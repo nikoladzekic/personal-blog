@@ -134,6 +134,148 @@ function drawPoster(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillRect(Math.floor(w * 0.6), Math.floor(h * 0.2), 4, 4);
 }
 
+/* Bug-hunter "target board" for the dark frame beside the desk: polaroid
+ * recon cards joined by pinned string, sticky-note leads, a barcode footer.
+ * Fully deterministic (no Math.random) so it bakes identically every mount. */
+function drawOpsBoard(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const crimson = '#d22f4f';
+  const gold = '#d4a04a';
+
+  ctx.fillStyle = '#101522';
+  ctx.fillRect(0, 0, w, h);
+  // faint blueprint grid
+  ctx.fillStyle = 'rgba(90,110,160,0.09)';
+  for (let x = 8; x < w; x += 8) ctx.fillRect(x, 0, 1, h);
+  for (let y = 8; y < h; y += 8) ctx.fillRect(0, y, w, 1);
+
+  // header
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = crimson;
+  ctx.fillRect(8, 8, w - 16, 2);
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('// TARGET BOARD', 10, 14);
+  ctx.fillStyle = gold;
+  ctx.font = '8px monospace';
+  ctx.fillText('ACTIVE ENGAGEMENTS: 2', 10, 30);
+
+  // polaroid card with a tiny pixel sketch in the photo window
+  const card = (
+    cx: number,
+    cy: number,
+    cw: number,
+    ch: number,
+    tilt: number,
+    sketch: 'building' | 'chip' | 'radar',
+    label: string
+  ) => {
+    ctx.save();
+    ctx.translate(cx + cw / 2, cy + ch / 2);
+    ctx.rotate(tilt);
+    ctx.translate(-cw / 2, -ch / 2);
+    ctx.fillStyle = '#d8d4c8';
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = '#141a28';
+    ctx.fillRect(4, 4, cw - 8, ch - 18);
+    if (sketch === 'building') {
+      ctx.fillStyle = '#3f5878';
+      ctx.fillRect(8, ch - 30, 10, 14);
+      ctx.fillRect(20, ch - 40, 12, 24);
+      ctx.fillRect(34, ch - 26, 9, 10);
+      ctx.fillStyle = gold;
+      for (const [bx, by] of [[22, ch - 36], [27, ch - 36], [22, ch - 29], [27, ch - 22], [10, ch - 27], [36, ch - 23]])
+        ctx.fillRect(bx, by, 2, 2);
+    } else if (sketch === 'chip') {
+      ctx.fillStyle = '#2e4a3a';
+      ctx.fillRect(12, 12, cw - 30, ch - 40);
+      ctx.fillStyle = gold;
+      for (let i = 0; i < 4; i++) {
+        ctx.fillRect(8, 14 + i * 5, 3, 2);
+        ctx.fillRect(cw - 19, 14 + i * 5, 3, 2);
+      }
+      ctx.fillStyle = '#39ff14';
+      ctx.fillRect(16, 16, 4, 4);
+    } else {
+      ctx.strokeStyle = '#39ff14';
+      ctx.lineWidth = 1;
+      const rcx = cw / 2;
+      const rcy = (ch - 14) / 2 + 2;
+      for (const r of [6, 12, 18]) {
+        ctx.beginPath();
+        ctx.arc(rcx, rcy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(rcx, rcy);
+      ctx.lineTo(rcx + 14, rcy - 11);
+      ctx.stroke();
+      ctx.fillStyle = crimson;
+      ctx.fillRect(rcx - 9, rcy + 4, 2, 2);
+      ctx.fillRect(rcx + 6, rcy - 14, 2, 2);
+    }
+    ctx.fillStyle = '#3a3630';
+    ctx.font = '7px monospace';
+    ctx.fillText(label, 5, ch - 12);
+    ctx.restore();
+  };
+
+  card(10, 46, 50, 60, -0.05, 'building', 'API GW');
+  card(112, 50, 52, 62, 0.06, 'chip', 'MCU FW');
+  card(60, 118, 54, 64, -0.03, 'radar', 'RECON');
+
+  // sticky-note leads
+  const sticky = (x: number, y: number, sw: number, text: string, color: string, tilt: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, sw, 16);
+    ctx.fillStyle = '#221c10';
+    ctx.font = 'bold 7px monospace';
+    ctx.fillText(text, 3, 5);
+    ctx.restore();
+  };
+  sticky(124, 122, 34, 'SSRF?', '#d8b830', 0.08);
+  sticky(8, 116, 54, 'AUTH BYPASS', '#d8b830', -0.06);
+  sticky(4, 152, 60, 'CVE-2026-????', '#7ad07a', 0.04);
+  sticky(126, 32, 44, 'IN SCOPE', '#7ad07a', -0.05);
+
+  // crimson string joining the gold pins
+  ctx.strokeStyle = crimson;
+  ctx.lineWidth = 1;
+  const pins: [number, number][] = [
+    [38, 52],
+    [136, 56],
+    [88, 124],
+  ];
+  ctx.beginPath();
+  ctx.moveTo(pins[0][0], pins[0][1]);
+  ctx.lineTo(pins[1][0], pins[1][1]);
+  ctx.lineTo(pins[2][0], pins[2][1]);
+  ctx.closePath();
+  ctx.stroke();
+  for (const [px, py] of pins) {
+    ctx.fillStyle = gold;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff2d0';
+    ctx.fillRect(px - 1, py - 1, 1, 1);
+  }
+
+  // classified footer + barcode
+  ctx.fillStyle = crimson;
+  ctx.font = 'bold 8px monospace';
+  ctx.fillText('CLASSIFIED', 122, 200);
+  ctx.fillStyle = '#c8c8d8';
+  const bars = [2, 1, 3, 1, 1, 2, 1, 4, 1, 2, 2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 4, 1, 2, 1, 3];
+  let bx = 10;
+  for (let i = 0; i < bars.length; i++) {
+    if (i % 2 === 0) ctx.fillRect(bx, 198, bars[i], 14);
+    bx += bars[i] + 1;
+  }
+}
+
 function drawOutside(ctx: CanvasRenderingContext2D, w: number, h: number) {
   // Dark night sky with purple/blue gradient
   const gradient = ctx.createLinearGradient(0, 0, 0, h);
@@ -241,6 +383,8 @@ export function usePixelTextures() {
 
     const poster = makeTexture(24, 32, drawPoster);
 
+    const opsBoard = makeTexture(176, 220, drawOpsBoard);
+
     const outside = makeTexture(128, 64, drawOutside);
 
     const bookResearch = makeTexture(16, 32, (ctx, w, h) =>
@@ -258,6 +402,7 @@ export function usePixelTextures() {
       ceiling,
       shelfWood,
       poster,
+      opsBoard,
       outside,
       bookResearch,
       bookDiary,

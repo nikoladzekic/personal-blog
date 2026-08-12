@@ -821,145 +821,316 @@ function HazeBand({
   );
 }
 
-const CAR_SPRITE_W = 48;
-const CAR_SPRITE_H = 24;
+const CAR_L = 0.44;
+const CAR_H = 0.165;
+const CAR_W = 0.19;
+const CAR_GROUND_Y = -2.985;
 const CAR_DAY_COLS = ['#c8c2b4', '#8f979e', '#5f6a72', '#a84038', '#d8d8d8', '#3a4148'];
 const CAR_NIGHT_HULLS = ['#12111c', '#171522', '#0e1018'];
+const TAXI_DAY = '#e8b820';
+const TAXI_NIGHT = '#4a3c10';
+
+type CarStyle = 'sedan' | 'van' | 'taxi';
 
 /**
- * Side-view pixel car baked to a canvas, drawn facing right (+x = nose);
- * StreetTraffic mirrors it with a negative x-scale for the opposite lane.
- * Night variant bakes lit head/taillights with glows into the sprite.
+ * 64x64 texture atlas for one car box, drawn facing right (+x = nose).
+ * Regions: SIDE (0,0)-(48,18), ROOF (0,20)-(48,40), FRONT (48,0)-(64,18),
+ * BACK (48,20)-(64,38), BELLY (48,40)-(64,56). Night variant bakes lit
+ * head/taillights with glows into the side/front/back faces.
  */
-function drawCarSprite(color: string, night: boolean) {
-  return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.clearRect(0, 0, w, h);
+function drawCarAtlas(color: string, night: boolean, style: CarStyle) {
+  return (ctx: CanvasRenderingContext2D) => {
+    ctx.clearRect(0, 0, 64, 64);
+    const glass = night ? '#1f2838' : '#39515c';
 
-    // ground shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(w / 2, 22, 20, 1.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // lower body: tapered nose and tail
+    /* ------------------------- SIDE, nose at right ------------------------- */
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(3, 18);
-    ctx.lineTo(2, 13);
-    ctx.lineTo(5, 11);
-    ctx.lineTo(43, 11);
-    ctx.lineTo(46, 13);
-    ctx.lineTo(45, 18);
+    if (style === 'van') {
+      // one boxy volume with a short sloped windshield
+      ctx.moveTo(3, 13);
+      ctx.lineTo(2, 3);
+      ctx.lineTo(5, 1);
+      ctx.lineTo(38, 1);
+      ctx.lineTo(43, 5);
+      ctx.lineTo(46, 8);
+      ctx.lineTo(45, 13);
+    } else {
+      // lower body: tapered nose and tail
+      ctx.moveTo(3, 13);
+      ctx.lineTo(2, 8);
+      ctx.lineTo(5, 6);
+      ctx.lineTo(43, 6);
+      ctx.lineTo(46, 8);
+      ctx.lineTo(45, 13);
+    }
     ctx.closePath();
     ctx.fill();
-
-    // cabin with slanted windshield and rear glass
-    ctx.beginPath();
-    ctx.moveTo(11, 11);
-    ctx.lineTo(15, 5);
-    ctx.lineTo(32, 5);
-    ctx.lineTo(37, 11);
-    ctx.closePath();
-    ctx.fill();
+    if (style !== 'van') {
+      // cabin with slanted windshield and rear glass
+      ctx.beginPath();
+      ctx.moveTo(11, 6);
+      ctx.lineTo(15, 0);
+      ctx.lineTo(32, 0);
+      ctx.lineTo(37, 6);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // roof highlight / side crease
     ctx.fillStyle = shade(color, night ? 1.4 : 1.25);
-    ctx.fillRect(15, 5, 17, 1);
+    if (style === 'van') ctx.fillRect(5, 1, 33, 1);
+    else ctx.fillRect(15, 0, 17, 1);
     ctx.fillStyle = shade(color, 0.75);
-    ctx.fillRect(5, 15, 38, 1);
+    ctx.fillRect(5, 10, 38, 1);
 
-    // windows, split by the b-pillar
-    ctx.fillStyle = night ? '#1f2838' : '#39515c';
-    ctx.beginPath();
-    ctx.moveTo(14, 10);
-    ctx.lineTo(17, 6);
-    ctx.lineTo(22, 6);
-    ctx.lineTo(22, 10);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(24, 6);
-    ctx.lineTo(30, 6);
-    ctx.lineTo(33, 10);
-    ctx.lineTo(24, 10);
-    ctx.closePath();
-    ctx.fill();
+    // windows
+    ctx.fillStyle = glass;
+    if (style === 'van') {
+      ctx.beginPath();
+      ctx.moveTo(38, 3);
+      ctx.lineTo(42, 6);
+      ctx.lineTo(38, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillRect(30, 3, 7, 4);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(14, 5);
+      ctx.lineTo(17, 1);
+      ctx.lineTo(22, 1);
+      ctx.lineTo(22, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(24, 1);
+      ctx.lineTo(30, 1);
+      ctx.lineTo(33, 5);
+      ctx.lineTo(24, 5);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     if (night) {
-      // lit headlight + warm cone, lit taillight + red glow
-      let g = ctx.createRadialGradient(46, 13, 0, 46, 13, 9);
-      g.addColorStop(0, 'rgba(255,246,220,0.85)');
+      // lit lamps baked into the side view
+      let g = ctx.createRadialGradient(46, 8, 0, 46, 8, 8);
+      g.addColorStop(0, 'rgba(255,246,220,0.8)');
       g.addColorStop(1, 'rgba(255,246,220,0)');
       ctx.fillStyle = g;
-      ctx.fillRect(37, 4, 11, 18);
+      ctx.fillRect(38, 1, 10, 15);
       ctx.fillStyle = '#fff6dc';
-      ctx.fillRect(43, 12, 3, 3);
+      ctx.fillRect(43, 7, 3, 3);
 
-      g = ctx.createRadialGradient(2, 13, 0, 2, 13, 6);
+      g = ctx.createRadialGradient(2, 8, 0, 2, 8, 6);
       g.addColorStop(0, 'rgba(255,59,48,0.8)');
       g.addColorStop(1, 'rgba(255,59,48,0)');
       ctx.fillStyle = g;
-      ctx.fillRect(0, 7, 8, 12);
+      ctx.fillRect(0, 2, 8, 12);
       ctx.fillStyle = '#ff3b30';
-      ctx.fillRect(2, 12, 2, 3);
+      ctx.fillRect(2, 7, 2, 3);
     } else {
-      // unlit lamps
       ctx.fillStyle = '#ded6b6';
-      ctx.fillRect(44, 12, 2, 2);
+      ctx.fillRect(44, 7, 2, 2);
       ctx.fillStyle = '#8c2a24';
-      ctx.fillRect(2, 12, 2, 2);
+      ctx.fillRect(2, 7, 2, 2);
     }
 
-    // wheels over the body, with hubs
+    // wheels over the body, hanging below the sill
     for (const wx of [12, 36]) {
       ctx.fillStyle = '#14131a';
       ctx.beginPath();
-      ctx.arc(wx, 18, 4.5, 0, Math.PI * 2);
+      ctx.arc(wx, 13.5, 4.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = night ? '#2c2c38' : '#4a4a55';
       ctx.beginPath();
-      ctx.arc(wx, 18, 1.8, 0, Math.PI * 2);
+      ctx.arc(wx, 13.5, 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    /* --------------------------- ROOF, nose at right ----------------------- */
+    ctx.fillStyle = shade(color, night ? 0.85 : 1.1);
+    ctx.fillRect(0, 20, 48, 20);
+    ctx.fillStyle = shade(color, 0.7);
+    ctx.fillRect(0, 20, 48, 2);
+    ctx.fillRect(0, 38, 48, 2);
+    ctx.fillRect(0, 20, 2, 20);
+    ctx.fillRect(46, 20, 2, 20);
+    ctx.fillStyle = glass;
+    if (style === 'van') {
+      ctx.fillRect(38, 22, 5, 16); // windshield band
+    } else {
+      ctx.fillRect(32, 22, 6, 16); // windshield band
+      ctx.fillRect(11, 23, 4, 14); // rear glass band
+    }
+    // wing mirrors
+    ctx.fillStyle = shade(color, 0.6);
+    ctx.fillRect(36, 19, 2, 2);
+    ctx.fillRect(36, 39, 2, 2);
+
+    /* --------------------------------- FRONT ------------------------------- */
+    ctx.fillStyle = color;
+    ctx.fillRect(48, 0, 16, 18);
+    ctx.fillStyle = glass;
+    ctx.fillRect(50, 0, 12, 3);
+    ctx.fillStyle = shade(color, 0.6);
+    ctx.fillRect(48, 12, 16, 6);
+    ctx.fillStyle = '#181820';
+    ctx.fillRect(52, 8, 8, 3);
+    if (night) {
+      for (const hx of [50, 61]) {
+        const g = ctx.createRadialGradient(hx, 7, 0, hx, 7, 5);
+        g.addColorStop(0, 'rgba(255,246,220,0.9)');
+        g.addColorStop(1, 'rgba(255,246,220,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(hx - 4, 3, 8, 8);
+      }
+      ctx.fillStyle = '#fff6dc';
+      ctx.fillRect(49, 6, 3, 2);
+      ctx.fillRect(60, 6, 3, 2);
+    } else {
+      ctx.fillStyle = '#ded6b6';
+      ctx.fillRect(49, 6, 3, 2);
+      ctx.fillRect(60, 6, 3, 2);
+    }
+
+    /* --------------------------------- BACK -------------------------------- */
+    ctx.fillStyle = color;
+    ctx.fillRect(48, 20, 16, 18);
+    ctx.fillStyle = glass;
+    ctx.fillRect(50, 20, 12, 3);
+    ctx.fillStyle = shade(color, 0.6);
+    ctx.fillRect(48, 32, 16, 6);
+    if (night) {
+      for (const hx of [50, 61]) {
+        const g = ctx.createRadialGradient(hx, 27, 0, hx, 27, 5);
+        g.addColorStop(0, 'rgba(255,59,48,0.85)');
+        g.addColorStop(1, 'rgba(255,59,48,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(hx - 4, 23, 8, 8);
+      }
+      ctx.fillStyle = '#ff3b30';
+      ctx.fillRect(49, 26, 3, 2);
+      ctx.fillRect(60, 26, 3, 2);
+    } else {
+      ctx.fillStyle = '#8c2a24';
+      ctx.fillRect(49, 26, 3, 2);
+      ctx.fillRect(60, 26, 3, 2);
+    }
+    // plate
+    ctx.fillStyle = '#c8c8c8';
+    ctx.fillRect(54, 33, 4, 2);
+
+    /* --------------------------------- BELLY ------------------------------- */
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(48, 40, 16, 16);
   };
 }
 
 /**
+ * BoxGeometry with each face's UVs remapped onto the car atlas. Face order is
+ * +x,-x,+y,-y,+z,-z with 4 verts/face laid out (0,1),(1,1),(0,0),(1,0); the
+ * -z side flips U so the nose stays at +x on both sides of the car.
+ */
+function makeCarGeometry() {
+  const geo = new THREE.BoxGeometry(CAR_L, CAR_H, CAR_W);
+  const uv = geo.attributes.uv as THREE.BufferAttribute;
+  const setFace = (f: number, x0: number, y0: number, x1: number, y1: number, flipU = false) => {
+    const u0 = (flipU ? x1 : x0) / 64;
+    const u1 = (flipU ? x0 : x1) / 64;
+    const v0 = 1 - y0 / 64;
+    const v1 = 1 - y1 / 64;
+    uv.setXY(f * 4 + 0, u0, v0);
+    uv.setXY(f * 4 + 1, u1, v0);
+    uv.setXY(f * 4 + 2, u0, v1);
+    uv.setXY(f * 4 + 3, u1, v1);
+  };
+  setFace(0, 48, 0, 64, 18); // +x nose
+  setFace(1, 48, 20, 64, 38); // -x tail
+  setFace(2, 0, 20, 48, 40); // +y roof
+  setFace(3, 48, 40, 64, 56); // -y belly
+  setFace(4, 0, 0, 48, 18); // +z side
+  setFace(5, 0, 0, 48, 18, true); // -z side, mirrored
+  uv.needsUpdate = true;
+  return geo;
+}
+
+/** Soft circular blob — stretched into an ellipse by the shadow quad. */
+function makeCarShadowTexture() {
+  return makeCityTexture(32, 32, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(0,0,0,0.5)');
+    g.addColorStop(0.65, 'rgba(0,0,0,0.28)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+}
+
+/** Warm tapered pool of light thrown on the road ahead of the nose at night. */
+function makeHeadlightTexture() {
+  return makeCityTexture(64, 32, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    const g = ctx.createLinearGradient(0, 0, w, 0);
+    g.addColorStop(0, 'rgba(255,240,200,0.55)');
+    g.addColorStop(1, 'rgba(255,240,200,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.32);
+    ctx.lineTo(w, 0);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h * 0.68);
+    ctx.closePath();
+    ctx.fill();
+  });
+}
+
+/**
  * Ground traffic on the baked avenue below the window (z ≈ -5.8..-4.2):
- * side-view pixel car sprites on camera-facing planes — coloured bodies by
- * day, dark hulls with baked lit lights at night. One lane per direction,
- * right-hand traffic; opposite lane mirrors via negative x-scale.
+ * low-poly boxes wrapped in per-car pixel atlases (side/roof/front/back), so
+ * cars read as 3D volumes from the elevated window view — coloured bodies by
+ * day, dark hulls with baked lit lights + road light pools at night. One lane
+ * per direction, right-hand traffic; opposite lane turns via a π y-rotation
+ * (negative scale would invert the box winding).
  */
 function StreetTraffic({ isDark }: { isDark: boolean }) {
   const group = useRef<THREE.Group>(null!);
 
-  const textures = useMemo(() => {
-    const cols = isDark ? CAR_NIGHT_HULLS : CAR_DAY_COLS;
-    return cols.map((c) => {
-      const tex = makeCityTexture(CAR_SPRITE_W, CAR_SPRITE_H, drawCarSprite(c, isDark));
-      // crisp pixel-car look instead of blurry upscaling
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      tex.generateMipmaps = false;
-      return tex;
-    });
-  }, [isDark]);
+  const geometry = useMemo(() => makeCarGeometry(), []);
+  const shadowTex = useMemo(() => makeCarShadowTexture(), []);
+  const beamTex = useMemo(() => (isDark ? makeHeadlightTexture() : null), [isDark]);
 
-  useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      shadowTex.dispose();
+    },
+    [geometry, shadowTex]
+  );
+  useEffect(() => () => beamTex?.dispose(), [beamTex]);
 
   const cars = useMemo(() => {
     const rand = mulberry32(isDark ? 31 : 32);
     return Array.from({ length: 8 }, () => {
       const dir = rand() < 0.5 ? 1 : -1;
-      return {
-        x: -14 + rand() * 28,
-        z: dir > 0 ? -5.45 : -4.65,
-        dir,
-        speed: (1.4 + rand() * 1.8) * dir,
-        tex: Math.floor(rand() * textures.length),
-      };
+      const x = -14 + rand() * 28;
+      const z = dir > 0 ? -5.45 : -4.65;
+      const speed = (1.4 + rand() * 1.8) * dir;
+      const pick = rand();
+      const style: CarStyle = pick < 0.55 ? 'sedan' : pick < 0.8 ? 'van' : 'taxi';
+      const hulls = isDark ? CAR_NIGHT_HULLS : CAR_DAY_COLS;
+      const color =
+        style === 'taxi' ? (isDark ? TAXI_NIGHT : TAXI_DAY) : hulls[Math.floor(rand() * hulls.length)];
+      const tex = makeCityTexture(64, 64, drawCarAtlas(color, isDark, style));
+      // crisp pixel-car look instead of blurry upscaling
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      return { x, z, dir, speed, style, hScale: style === 'van' ? 1.3 : 1, tex };
     });
-  }, [isDark, textures]);
+  }, [isDark]);
+
+  useEffect(() => () => cars.forEach((c) => c.tex.dispose()), [cars]);
 
   useFrame((_, delta) => {
     group.current.children.forEach((car, i) => {
@@ -972,19 +1143,33 @@ function StreetTraffic({ isDark }: { isDark: boolean }) {
   return (
     <group ref={group}>
       {cars.map((c, i) => (
-        // sprite ground line sits at the old box's bottom (y ≈ -2.985)
-        <group key={i} position={[c.x, -2.877, c.z]}>
-          <mesh scale={[c.dir, 1, 1]}>
-            <planeGeometry args={[0.44, 0.22]} />
-            <meshBasicMaterial
-              map={textures[c.tex]}
-              transparent
-              alphaTest={0.05}
-              side={THREE.DoubleSide}
-              depthWrite={false}
-              fog={!isDark}
-            />
+        <group key={i} position={[c.x, CAR_GROUND_Y, c.z]} rotation={[0, c.dir > 0 ? 0 : Math.PI, 0]}>
+          <mesh geometry={geometry} position={[0, (CAR_H * c.hScale) / 2 + 0.004, 0]} scale={[1, c.hScale, 1]}>
+            <meshBasicMaterial map={c.tex} fog={!isDark} />
           </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+            <planeGeometry args={[0.52, 0.26]} />
+            <meshBasicMaterial map={shadowTex} transparent depthWrite={false} fog={!isDark} />
+          </mesh>
+          {isDark && beamTex && (
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[CAR_L / 2 + 0.24, 0.003, 0]}>
+              <planeGeometry args={[0.48, 0.2]} />
+              <meshBasicMaterial
+                map={beamTex}
+                transparent
+                opacity={0.5}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+                fog={false}
+              />
+            </mesh>
+          )}
+          {c.style === 'taxi' && (
+            <mesh position={[0.02, CAR_H * c.hScale + 0.018, 0]}>
+              <boxGeometry args={[0.07, 0.026, 0.045]} />
+              <meshBasicMaterial color="#ffd84a" fog={!isDark} />
+            </mesh>
+          )}
         </group>
       ))}
     </group>

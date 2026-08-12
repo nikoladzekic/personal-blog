@@ -104,8 +104,8 @@ function drawFrame(ctx: CanvasRenderingContext2D, t: number) {
     const gap = obX - runnerX;
     const jumping = gap > -20 && gap < 70;
     const jumpY = jumping ? -Math.sin(((gap + 20) / 90) * Math.PI) * 58 : 0;
-    const frame = jumping ? 0 : Math.floor(t * 10) % 2;
-    drawSprite(ctx, RUNNER_FRAMES[frame], runnerX, floorY - 48 + jumpY, 6, RUNNER_PALETTE);
+    const frame = jumping ? 4 : Math.floor(t * 12) % 4;
+    drawSprite(ctx, RUNNER_FRAMES[frame], runnerX, floorY - 50 + jumpY, 5, RUNNER_PALETTE);
 
     // demo score ticker
     ctx.font = `10px ${PIXEL}`;
@@ -130,8 +130,8 @@ function drawFrame(ctx: CanvasRenderingContext2D, t: number) {
 
     const rowColors = ['#ffe14a', '#ffb01e', '#62e8ff', '#7aff7a', '#c8c8e8'];
     ctx.font = `11px ${PIXEL}`;
-    getScoreTable().forEach(([rank, name, score], i) => {
-      ctx.fillStyle = name === 'YOU' ? '#39ff14' : rowColors[i];
+    getScoreTable().forEach(([rank, name, score, you], i) => {
+      ctx.fillStyle = you ? '#39ff14' : rowColors[i];
       ctx.fillText(`${rank}  ${name} ...... ${String(score).padStart(6, '0')}`, W / 2, 200 + i * 30);
     });
 

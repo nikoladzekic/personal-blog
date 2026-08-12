@@ -123,9 +123,16 @@ export function Room({ isDark = false }: RoomProps) {
         <RoundedBox args={[1.05, 1.3, 0.04]} radius={0.012} smoothness={3} position={[0, 0, -0.015]}>
           <meshStandardMaterial color="#111118" roughness={0.8} />
         </RoundedBox>
-        <mesh>
+        {/* poster must sit in front of the frame box face (front face is at z=0.005) */}
+        <mesh position={[0, 0, 0.008]}>
           <planeGeometry args={[0.88, 1.1]} />
-          <meshStandardMaterial map={tex.poster} roughness={1} />
+          <meshStandardMaterial
+            map={tex.opsBoard}
+            roughness={1}
+            emissive="#ffffff"
+            emissiveMap={tex.opsBoard}
+            emissiveIntensity={isDark ? 0.35 : 0.08}
+          />
         </mesh>
       </group>
 

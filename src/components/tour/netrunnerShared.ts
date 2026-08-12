@@ -33,46 +33,92 @@ export const SKULL_PALETTE: Record<number, string> = {
   3: '#39ff14',
 };
 
-/* 12x8 runner sprite, two run frames + one slide frame
- * (0 transparent, 1 suit, 2 visor glow, 3 trim) */
+/* 12x10 runner sprite — 4-frame run cycle + jump + slide
+ * (0 transparent, 1 limbs, 2 visor glow, 3 scarf, 4 jacket/helmet, 5 boots/gloves)
+ * Frame index: 0 contact A, 1 pass A (neutral pose), 2 contact B, 3 pass B,
+ * 4 jump, 5 slide. Run cycle = frames 0-3. */
 // prettier-ignore
 export const RUNNER_FRAMES: number[][][] = [
-  [ // frame A — legs apart
-    [0,0,0,0,1,1,1,0,0,0,0,0],
-    [0,0,0,1,2,2,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,1,1,1,1,1,1,3,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,1,1,0,0,1,1,0,0,0,0],
-    [0,1,1,0,0,0,0,1,1,0,0,0],
+  [ // 0 — run contact A: legs split wide, scarf trailing
+    [0,0,0,0,0,4,4,4,0,0,0,0],
+    [0,0,0,0,4,4,2,2,0,0,0,0],
+    [0,0,0,0,4,4,4,4,0,0,0,0],
+    [3,3,0,0,0,4,4,0,0,0,0,0],
+    [0,3,3,4,4,4,4,4,1,1,0,0],
+    [0,0,3,4,4,4,4,4,0,1,5,0],
+    [0,0,1,1,4,4,4,0,0,0,0,0],
+    [0,5,1,0,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,0,0,1,1,0,0,0],
+    [0,0,5,5,0,0,0,0,5,5,0,0],
   ],
-  [ // frame B — legs crossed
+  [ // 1 — run pass A / neutral ready pose
+    [0,0,0,0,0,4,4,4,0,0,0,0],
+    [0,0,0,0,4,4,2,2,0,0,0,0],
+    [0,0,0,0,4,4,4,4,0,0,0,0],
+    [0,3,3,0,0,4,4,0,0,0,0,0],
+    [0,0,3,3,4,4,4,4,1,0,0,0],
+    [0,0,0,4,4,4,4,4,1,5,0,0],
+    [0,0,0,1,4,4,4,0,0,0,0,0],
     [0,0,0,0,1,1,1,0,0,0,0,0],
-    [0,0,0,1,2,2,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,1,1,1,1,1,1,3,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,0,0,0,0,0],
-    [0,0,0,1,1,1,0,0,0,0,0,0],
     [0,0,0,0,1,1,0,0,0,0,0,0],
+    [0,0,0,5,5,0,0,0,0,0,0,0],
   ],
-  [ // frame C — sliding/duck
+  [ // 2 — run contact B: scarf dips, legs crossed under
+    [0,0,0,0,0,4,4,4,0,0,0,0],
+    [0,0,0,0,4,4,2,2,0,0,0,0],
+    [0,0,0,0,4,4,4,4,0,0,0,0],
+    [0,3,3,0,0,4,4,0,0,0,0,0],
+    [3,3,0,4,4,4,4,4,1,1,0,0],
+    [0,0,0,4,4,4,4,4,0,1,5,0],
+    [0,0,1,1,4,4,4,0,0,0,0,0],
+    [0,5,1,0,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,5,5,0,5,5,0,0,0,0],
+  ],
+  [ // 3 — run pass B: scarf whips high
+    [0,0,0,0,0,4,4,4,0,0,0,0],
+    [0,3,0,0,4,4,2,2,0,0,0,0],
+    [0,3,3,0,4,4,4,4,0,0,0,0],
+    [0,0,3,0,0,4,4,0,0,0,0,0],
+    [0,0,3,3,4,4,4,4,1,0,0,0],
+    [0,0,0,4,4,4,4,4,1,5,0,0],
+    [0,0,0,1,4,4,4,0,0,0,0,0],
+    [0,0,0,0,1,1,1,0,0,0,0,0],
+    [0,0,0,1,1,0,1,0,0,0,0,0],
+    [0,0,5,5,0,5,5,0,0,0,0,0],
+  ],
+  [ // 4 — jump: knees tucked, arm reaching up-forward, scarf streaming
+    [0,0,0,0,0,4,4,4,0,0,0,0],
+    [0,0,0,0,4,4,2,2,0,1,5,0],
+    [0,0,0,0,4,4,4,4,1,1,0,0],
+    [0,0,0,0,0,4,4,1,0,0,0,0],
+    [0,3,3,4,4,4,4,4,0,0,0,0],
+    [3,3,0,4,4,4,4,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,0,1,1,0,0,0,0],
+    [0,0,5,5,0,0,5,5,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+  ],
+  [ // 5 — slide: low profile, scarf flat behind
     [0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,1,1,1,0,0],
-    [0,0,0,0,0,0,1,2,2,1,0,0],
-    [0,1,1,1,1,1,1,1,1,1,0,0],
-    [1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,1,1,0,0,0,1,1,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,4,4,4,0,0],
+    [3,3,0,0,0,0,4,4,2,2,0,0],
+    [0,3,3,4,4,4,4,4,4,4,0,0],
+    [0,4,4,4,4,4,4,4,1,1,5,0],
+    [1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,5,5,0,0,5,5,0,0,0,0,0],
   ],
 ];
 
 export const RUNNER_PALETTE: Record<number, string> = {
-  1: '#62e8ff',
+  1: '#2e7fa8',
   2: '#39ff14',
   3: '#ff5ad2',
+  4: '#62e8ff',
+  5: '#ffe14a',
 };
 
 /* 10x6 ICE drone sprite (duck under it) */
@@ -162,7 +208,13 @@ export function makeCrtOverlay(w: number, h: number): HTMLCanvasElement {
 
 /* ------------------------------- high scores ------------------------------- */
 
-const HISCORE_KEY = 'netrunner-hiscore';
+const SCORES_KEY = 'netrunner-scores';
+const LEGACY_KEY = 'netrunner-hiscore';
+
+interface ScoreEntry {
+  name: string;
+  score: number;
+}
 
 const BUILTIN_SCORES: [string, number][] = [
   ['ACE', 4213],
@@ -172,32 +224,66 @@ const BUILTIN_SCORES: [string, number][] = [
   ['NUL', 256],
 ];
 
-export function getBestScore(): number {
+/** Player-set entries only (builtins are added at read time). Newest schema is
+ * a JSON array of {name, score}; a bare number under LEGACY_KEY is migrated. */
+function loadScores(): ScoreEntry[] {
   try {
-    return Number(localStorage.getItem(HISCORE_KEY)) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-export function submitScore(score: number): boolean {
-  const best = getBestScore();
-  if (score > best) {
-    try {
-      localStorage.setItem(HISCORE_KEY, String(Math.floor(score)));
-    } catch {
-      /* private mode — score just isn't persisted */
+    const raw = localStorage.getItem(SCORES_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((e) => typeof e?.score === 'number');
     }
-    return true;
+    const legacy = Number(localStorage.getItem(LEGACY_KEY));
+    if (legacy > 0) return [{ name: 'YOU', score: legacy }];
+  } catch {
+    /* private mode / corrupt data — start empty */
   }
-  return false;
+  return [];
 }
 
-/** Built-in table merged with the player's persisted best, sorted descending. */
-export function getScoreTable(): [string, string, number][] {
-  const rows: [string, number][] = [...BUILTIN_SCORES];
-  const best = getBestScore();
-  if (best > 0) rows.push(['YOU', best]);
-  rows.sort((a, b) => b[1] - a[1]);
-  return rows.slice(0, 5).map(([name, score], i) => [String(i + 1), name, score]);
+function saveScores(entries: ScoreEntry[]) {
+  try {
+    localStorage.setItem(SCORES_KEY, JSON.stringify(entries.slice(0, 10)));
+  } catch {
+    /* private mode — score just isn't persisted */
+  }
+}
+
+/** The player's best run so far (0 if none). Drives the in-game HI counter. */
+export function getBestScore(): number {
+  return loadScores().reduce((max, e) => Math.max(max, e.score), 0);
+}
+
+/** Would this score land in the visible top-5 (against builtins + past runs)? */
+export function qualifiesForTable(score: number): boolean {
+  if (score <= 0) return false;
+  const merged = [
+    ...BUILTIN_SCORES.map(([, s]) => s),
+    ...loadScores().map((e) => e.score),
+  ].sort((a, b) => b - a);
+  return merged.length < 5 || Math.floor(score) > merged[4];
+}
+
+/** Persist a named run. Name is coerced to 3 uppercase chars. */
+export function submitScore(name: string, score: number) {
+  const entries = loadScores();
+  entries.push({
+    name: (name.slice(0, 3).toUpperCase() || 'YOU').padEnd(3, ' ').trimEnd(),
+    score: Math.floor(score),
+  });
+  entries.sort((a, b) => b.score - a.score);
+  saveScores(entries);
+}
+
+/**
+ * Built-in table merged with the player's persisted runs, sorted descending.
+ * The trailing boolean flags player-set rows so the cabinet can highlight them.
+ */
+export function getScoreTable(): [string, string, number, boolean][] {
+  const rows = [
+    ...BUILTIN_SCORES.map(([name, score]) => ({ name, score, you: false })),
+    ...loadScores().map((e) => ({ name: e.name, score: e.score, you: true })),
+  ];
+  rows.sort((a, b) => b.score - a.score);
+  return rows.slice(0, 5).map((r, i) => [String(i + 1), r.name, r.score, r.you]);
 }
