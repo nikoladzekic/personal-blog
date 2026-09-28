@@ -37,8 +37,8 @@ const platformLabels: Record<string, string> = {
   date={data.date}
   tags={data.tags}
 >
-  <!-- Type-specific metadata panel -->
-  <div class="meta-panel">
+  <!-- Type-specific metadata, inline in the post header -->
+  <div class="meta-line" slot="meta">
     <span class={`badge badge-${data.type}`}>
       {data.type === 'cve' ? 'CVE' : data.type === 'bounty' ? 'BOUNTY' : 'RESEARCH'}
     </span>
@@ -76,27 +76,23 @@ const platformLabels: Record<string, string> = {
 </Post>
 
 <style>
-  .meta-panel {
+  .meta-line {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    padding: 1rem 1.25rem;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--primary);
-    margin-bottom: 2rem;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-family: var(--font-meta);
+    font-size: 0.8rem;
   }
 
   .meta-item {
-    color: var(--text-dim);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
   }
 
   .meta-item strong {
-    color: var(--text);
+    color: var(--text-dim);
+    font-weight: 400;
   }
 
   .cve-id {

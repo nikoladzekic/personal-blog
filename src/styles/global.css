@@ -79,6 +79,82 @@ body::before {
   z-index: -1;
 }
 
+/* ── Ambient background layer ────────────────────────────────────────────── */
+/* Purely decorative: a slow-drifting mesh and two lazy colour blooms.
+   Everything is transform/opacity only so it stays off the paint path. */
+.site-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.site-bg-grid {
+  position: absolute;
+  inset: -12%;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 30%, black, transparent 78%);
+  opacity: 0.3;
+  animation: bg-drift 64s linear infinite;
+}
+
+@keyframes bg-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-64px, -64px, 0); }
+}
+
+.site-bg-glow {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.16;
+  will-change: transform;
+}
+
+.site-bg-glow--a {
+  top: -14vmax;
+  left: -10vmax;
+  background: radial-gradient(circle, var(--primary), transparent 65%);
+  animation: bg-float-a 38s ease-in-out infinite;
+}
+
+.site-bg-glow--b {
+  bottom: -18vmax;
+  right: -12vmax;
+  background: radial-gradient(circle, var(--accent-2), transparent 65%);
+  opacity: 0.1;
+  animation: bg-float-b 47s ease-in-out infinite;
+}
+
+@keyframes bg-float-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(8vmax, 6vmax, 0) scale(1.15); }
+}
+
+@keyframes bg-float-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.1); }
+  50%      { transform: translate3d(-7vmax, -5vmax, 0) scale(1); }
+}
+
+[data-theme="light"] .site-bg-grid { opacity: 0.5; }
+[data-theme="light"] .site-bg-glow { opacity: 0.12; }
+
+@media (prefers-reduced-motion: reduce) {
+  .site-bg-grid,
+  .site-bg-glow { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .site-bg-glow { filter: blur(60px); }
+}
+
 /* ── Typography ──────────────────────────────────────────────────────────── */
 h1, h2, h3, h4 {
   font-family: var(--font-display);

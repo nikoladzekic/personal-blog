@@ -53,7 +53,6 @@ function formatDate(date: Date) {
       <dl class="facts">
         <div class="fact"><dt>handle</dt><dd>ndzekic</dd></div>
         <div class="fact"><dt>focus</dt><dd>engineering · web · appsec</dd></div>
-        <div class="fact"><dt>status</dt><dd><span class="status-dot"></span>online</dd></div>
       </dl>
     </section>
 
@@ -91,8 +90,8 @@ function formatDate(date: Date) {
       )}
 
       <nav class="section-links">
-        <a href="/blog" class="more-link">[B] all blog posts →</a>
-        <a href="/research" class="more-link">[R] all research →</a>
+        <a href="/blog" class="more-link">all blog posts →</a>
+        <a href="/research" class="more-link">all research →</a>
       </nav>
     </section>
 
@@ -111,19 +110,6 @@ function formatDate(date: Date) {
     </section>
   </div>
 </Base>
-
-<script>
-  const routes: Record<string, string> = {
-    KeyB: '/blog',
-    KeyR: '/research',
-  };
-
-  window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    const path = routes[e.code];
-    if (path) window.location.href = path;
-  });
-</script>
 
 <style>
   .home {
@@ -258,22 +244,6 @@ function formatDate(date: Date) {
     font-size: 0.95rem;
     color: var(--text);
     margin: 0;
-  }
-
-  @keyframes dot-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(103, 232, 249, 0.5); }
-    70%  { box-shadow: 0 0 0 7px rgba(103, 232, 249, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(103, 232, 249, 0); }
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent-2);
-    margin-right: 0.4em;
-    animation: dot-pulse 2.4s ease-out infinite;
   }
 
   /* ── latest ── */
@@ -436,6 +406,11 @@ function formatDate(date: Date) {
     font-family: var(--font-meta);
     font-size: 0.85rem;
     color: var(--text-dim);
+  }
+
+  /* the 3D tour needs a keyboard + a real GPU — hide its entry point on phones */
+  @media (max-width: 860px) {
+    .tour-teaser { display: none; }
   }
 
   @media (max-width: 600px) {

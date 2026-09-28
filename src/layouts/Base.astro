@@ -52,6 +52,11 @@ const ogImage = `${siteOrigin}/og.svg`;
     <meta name="twitter:image" content={ogImage} />
   </head>
   <body>
+    <div class="site-bg" aria-hidden="true">
+      <div class="site-bg-grid"></div>
+      <div class="site-bg-glow site-bg-glow--a"></div>
+      <div class="site-bg-glow site-bg-glow--b"></div>
+    </div>
     <Cursor />
     <RetroNav sector={sector} />
     <main>

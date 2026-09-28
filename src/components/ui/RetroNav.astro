@@ -8,7 +8,7 @@ const currentPath = Astro.url.pathname;
 const navLinks = [
   { href: '/blog', label: 'blog' },
   { href: '/research', label: 'research' },
-  { href: '/tour', label: 'tour' },
+  { href: '/tour', label: 'tour', desktopOnly: true },
 ];
 ---
 
@@ -31,7 +31,7 @@ const navLinks = [
       {navLinks.map(link => (
         <a
           href={link.href}
-          class:list={['nav-link', { active: currentPath.startsWith(link.href) }]}
+          class:list={['nav-link', { active: currentPath.startsWith(link.href), 'desktop-only': link.desktopOnly }]}
         >
           {link.label}
         </a>
@@ -167,6 +167,11 @@ const navLinks = [
   .theme-icon {
     font-size: 0.95rem;
     line-height: 1;
+  }
+
+  /* the 3D tour needs a keyboard + a real GPU — hide its entry points on phones */
+  @media (max-width: 860px) {
+    .nav-link.desktop-only { display: none; }
   }
 
   @media (max-width: 600px) {

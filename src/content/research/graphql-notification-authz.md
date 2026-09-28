@@ -132,4 +132,4 @@ The reusable part is a short list of questions for any GraphQL mutation.
 - **Where does the filter sit relative to the decoders?** Anything parsed after the filter runs; JSON escapes, URL encoding, HTML entities, is a way past it.
 
 
-That would be all for this post, hope you learned something new like I did. Thank you for reading it all through the very end, cheers!
+That would be all for this post, hope you learned something new like I did. Thank you for reading it all through the very end, and I'll catch you all in the next one!

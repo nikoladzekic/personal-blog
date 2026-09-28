@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Tour from '../layouts/Tour.astro';
-import { World } from '../components/tour/World';
+import { TourGate } from '../components/tour/TourGate';
 import type { PostEntry } from '../components/tour/PostModal';
 
 const formatDate = (d: Date) =>
@@ -38,5 +38,43 @@ const researchPosts: PostEntry[] = researchEntries
 ---
 
 <Tour>
-  <World client:only="react" blogPosts={blogPosts} researchPosts={researchPosts} />
+  <TourGate client:only="react" blogPosts={blogPosts} researchPosts={researchPosts} />
 </Tour>
+
+<style is:global>
+  #tour-unsupported {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: #ece7e8;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tu-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: #f2a33c;
+    margin-bottom: 1.25rem;
+  }
+
+  .tu-body {
+    max-width: 26rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #b3a8ab;
+    margin-bottom: 1.5rem;
+  }
+
+  .tu-link {
+    font-size: 0.85rem;
+    color: #e63950;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+</style>
